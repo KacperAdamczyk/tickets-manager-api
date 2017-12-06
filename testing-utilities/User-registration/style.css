@@ -1,0 +1,35 @@
+@import '../variables.css';
+
+* {
+    font-size: 20px;
+    box-sizing: border-box;
+}
+
+body { 
+    background-color: var(--background);
+}
+
+header {
+    text-align: center;
+}
+
+section {
+    border: 2px dashed red;
+    padding: 20px;
+}
+
+h2 { 
+    color: var(--detail);
+    font-size: 40px;
+}
+
+form {
+    margin: auto;
+    width: 300px;
+}
+
+form > * {
+    display: block;
+    margin: 10px 0 10px 0;
+    width: 100%;
+}
