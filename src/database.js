@@ -9,19 +9,13 @@ const ip = 'localhost';
 const database = 'be-project';
 const connectionString = `mongodb://${ip}/${database}`;
 
-let timeUntilNextTry = 1000;
-
-let tries = 1;
-function connect(repeat = -1) {
-    mongoose.connect(connectionString, { useMongoClient: true })
-        .then(() => {
+function connect() {
+    return mongoose.connect(connectionString, { useMongoClient: true })
+        .then((conn) => {
             console.log(chalk.green('Connected to database. \n'));
+            return conn;
         }, (err) => {
-            let retry = Boolean(++tries < repeat || repeat < 0);
-            console.log(chalk.red(`\n${err} \n${retry ? `Repeating in ${timeUntilNextTry}ms ${repeat < 0 ? '' : `[${repeat - tries + 1} left]`}\n`: ''}`));
-            setTimeout(() => {
-                if (retry) connect(repeat);
-                }, timeUntilNextTry);
+            console.log(chalk.red(`\n${err}\n`));
         });
 }
 

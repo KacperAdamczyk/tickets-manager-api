@@ -11,8 +11,25 @@ const indexUrl = '../dist/index.html';
 
 /* Defining routes */
 
-router.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, indexUrl));
-});
+module.exports = passport => {
 
-module.exports = router;
+    router.post('/login', passport.authenticate('local'));
+    router.get('/user', (req, res) => {
+        User.findById(req.session.passport.user).exec()
+            .then(user => {
+                    console.log(user);
+                },
+                    err => console.log(err));
+
+        res.send('');
+    });
+
+    router.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, indexUrl));
+    });
+
+    return router;
+};
+
+
+
