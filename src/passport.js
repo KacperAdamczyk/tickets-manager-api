@@ -3,12 +3,10 @@ const LocalStrategy = require('passport-local').Strategy;
 
 const User = require('./models/user');
 
-// used to serialize the user for the session
 passport.serializeUser(function(user, done) {
     done(null, user.id);
 });
 
-// used to deserialize the user
 passport.deserializeUser(function(id, done) {
     User.findById(id).exec().then(user => done(null, user), err => done(err));
 });
@@ -16,7 +14,7 @@ passport.deserializeUser(function(id, done) {
 passport.use(
     new LocalStrategy({
         usernameField : 'email',
-        passwordField : 'password'
+        passwordField : 'password',
     },
     (email, password, done) => {
         User.findOne({ 'email': email }).exec()
@@ -26,7 +24,7 @@ passport.use(
                 }
                 done(null, user);
             }, err => {
-                done(null, false, err);
+                done(err);
             });
     }));
 

@@ -12,7 +12,6 @@ const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const flash = require('connect-flash');
 const morgan = require('morgan');
 
 /* Local dependencies */
@@ -23,7 +22,7 @@ const db = require('./src/database');
 /* Configuration */
 const server = express();
 server.use(session({
-    secret: 'ilovescotchscotchyscotchscotch',
+    secret: 'be-project-Kacper-Adamczyk',
     resave: true,
     saveUninitialized: false,
     store: new MongoStore({ dbPromise: db.connect() })
@@ -35,7 +34,7 @@ server.use(cookieParser());
 server.use(bodyParser.urlencoded({ extended: false }));
 server.use(bodyParser.json());
 server.use(passport.initialize());
-server.use(passport.session()); // persistent login sessions
+server.use(passport.session());
 
 server.use(morgan('dev'));
 server.use(router(passport));

@@ -13,28 +13,61 @@ const indexUrl = '../dist/index.html';
 
 module.exports = passport => {
 
-    router.post('/login', passport.authenticate('local'));
+    /* --- User API ---
+    * POST /login
+    * GET  /logout
+    * GET  /user
+    * POST /user/create
+    * --- Error object ---
+    * success: Boolean - Indicates success of operation
+    * message: String  - If failed provides description of the error */
 
-    router.get('/user', (req, res) => {
-        if (!req.session.passport) {
-            return res.status(404).send('You are not logged in');
-        }
-        User.findById(req.session.passport.user).exec().then(user => res.send(user), () => res.status(404).send('User not found'));
+    router.post('/login', passport.authenticate('local'), (req, res) => {
+        res.status(200).send({ success: true });
+    });
+
+    router.get('/logout', (req, res) => {
+        req.logout();
+        req.session.destroy(err => {
+            if(err) {
+                console.log(`Session destroy error: ${err}`);
+                res.status(500).send({ success: false, message: err });
+            }
+        });
+        res.status(200).send({ success: true });
+    });
+
+    router.get('/user', isAuthenticated, (req, res) => {
+        User.findById(req.session.passport.user).exec()
+            .then(user => res.send(user),
+                () => res.status(404).send({ success: false, message: 'User not found' })
+            );
     });
 
     router.post('/user/create', (req, res) => {
         if (!req.body.email || !req.body.password) {
-            res.status(404).send('Provide email and password');
+            res.status(400).send({ success: false, message: 'Provide valid email and password' });
         }
         let user = new User();
         user.add(req.body.email, req.body.password)
-            .then(() => res.status(200).send(),
-                    err => res.status(404).send(err));
+            .then(() => res.status(201).send(),
+                    err => res.status(400).send(err)
+            );
     });
 
     router.get('*', (req, res) => {
         res.sendFile(path.join(__dirname, indexUrl));
     });
+
+    /* Middleware */
+
+    function isAuthenticated(req, res, next) {
+        if (!req.session.passport) {
+            res.status(401).send({ success: false, message: 'User not authenticated' });
+        } else {
+            next();
+        }
+    }
 
     return router;
 };
