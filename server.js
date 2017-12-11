@@ -33,6 +33,7 @@ server.use(helmet());
 server.use(cors());
 server.use(cookieParser());
 server.use(bodyParser.urlencoded({ extended: false }));
+server.use(bodyParser.json());
 server.use(passport.initialize());
 server.use(passport.session()); // persistent login sessions
 
