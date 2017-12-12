@@ -20,12 +20,12 @@ passport.use(
         User.findOne({ 'email': email }).exec()
             .then(user => {
                 if (!user) {
-                    return done(null, false, { success: false, message: 'User not found.' });
+                    return done(null, false, { success: false, message: 'User not found' });
                 }
                 if (!user.validatePassword(password)) {
-                    return done(null, false, { success: false, message: 'Incorrect password.' });
+                    return done(null, false, { success: false, message: 'Incorrect password' });
                 }
-                if (user.tokens.activationToken !== null) {
+                if (user.tokens.activationToken) {
                     return done(null, false, { success: false, message: 'User is not activated' });
                 }
                 done(null, user);

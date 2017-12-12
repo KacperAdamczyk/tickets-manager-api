@@ -17,11 +17,12 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    admin: {
+        type: Boolean,
+        default: false
+    },
     tokens: {
-        activationToken: {
-            type: String,
-            required: true
-        },
+        activationToken: String,
         resetToken: String
     },
     details: {
@@ -38,7 +39,7 @@ class UserClass {
     async add(email, password) {
             this.email = email;
             this.password = UserClass.hashPassword(password);
-            this.tokens.activationToken = this.generateActivationToken();
+            this.tokens.activationToken = this.generateVerifyToken();
             console.log(chalk.blue(`Attempting to create new user: ${this.email}`));
             try {
                 await this.save();
@@ -54,18 +55,66 @@ class UserClass {
     static hashPassword(password) {
         return bcrypt.hashSync(password, bcrypt.genSaltSync(10), null);
     }
-    generateActivationToken() {
-        return jwt.sign(this.id, config.tokenSecret);
+    generateVerifyToken() {
+        return jwt.sign({ id: this.id }, config.tokenSecret);
+    }
+    generateResetToken() {
+        return jwt.sign({ id: this.id }, config.tokenSecret, { expiresIn: '1d' });
     }
     static async activateUser(token) {
-            let userId = jwt.verify(token, config.tokenSecret);
-        console.log('userID', userId);
             try {
-                await this.findByIdAndUpdate(userId, { $set: { tokens: { activationToken: null }}}).exec();
+                let userId = jwt.verify(token, config.tokenSecret).id;
+                let user = await this.findById(userId).exec();
+                if (user.tokens.activationToken !== token) {
+                    throw 'Invalid token';
+                }
+                this.tokens.activationToken = null;
+                await this.save();
             } catch (err) {
                 console.log(chalk.red(err));
                 throw err;
             }
+    }
+    async changePassword(oldPassowrd, newPassword) {
+            try{
+                if (!this.validatePassword(oldPassowrd)) {
+                    throw 'Old password is not correct';
+                }
+                this.password = UserClass.hashPassword(newPassword);
+                await this.save();
+            } catch (err) {
+                console.log(chalk.red(err));
+                throw err;
+            }
+    }
+
+    static async generateResetPasswordRequest(email) {
+        try {
+            let user = await this.findOne({ email }).exec();
+            user.tokens.resetToken = user.generateResetToken();
+            await user.save();
+        } catch (err) {
+            console.log(chalk.red(err));
+            throw err;
+        }
+    }
+    static async resetPassword(token, oldPassword, newPassword) {
+        try {
+            let userId = jwt.verify(token, config.tokenSecret).id;
+            let user = await this.findById(userId).exec();
+            if (!user || user.tokens.resetToken !== token) {
+                throw 'Invalid token';
+            }
+            if (!user.validatePassword(oldPassword)) {
+                throw 'Invalid old password';
+            }
+            user.password = UserClass.hashPassword(newPassword);
+            user.tokens.resetToken = null;
+            await user.save();
+        } catch (err) {
+            console.log(chalk.red(err));
+            throw err;
+        }
     }
 }
 
