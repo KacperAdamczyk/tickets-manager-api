@@ -50,8 +50,15 @@ module.exports = passport => {
         }
         let user = new User();
         user.add(req.body.email, req.body.password)
-            .then(() => res.status(201).send(),
-                    err => res.status(400).send(err)
+            .then(() => res.status(201).send({ success: true }),
+                    err => res.status(400).send({ success: false, message: err })
+            );
+    });
+
+    router.get('/user/verify/:token', (req, res) => {
+        User.activateUser(req.params.token)
+            .then(() => res.status(200).send({ success: true }),
+                err => res.status(401).send({ success: false, message: err })
             );
     });
 

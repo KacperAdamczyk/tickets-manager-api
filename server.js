@@ -1,7 +1,5 @@
 'use strict';
 /* Dependencies */
-// const fs = require('fs');
-// const https = require('https');
 const path = require('path');
 const chalk = require('chalk');
 
@@ -18,11 +16,12 @@ const morgan = require('morgan');
 const passport = require('./src/passport');
 const router = require('./src/routes');
 const db = require('./src/database');
+const config = require('./src/config');
 
 /* Configuration */
 const server = express();
 server.use(session({
-    secret: 'be-project-Kacper-Adamczyk',
+    secret: config.sessionSecret,
     resave: true,
     saveUninitialized: false,
     store: new MongoStore({ dbPromise: db.connect() })
@@ -39,14 +38,8 @@ server.use(passport.session());
 server.use(morgan('dev'));
 server.use(router(passport));
 
-// const sslOptions = {
-//     key: fs.readFileSync('certificate/ukey.pem'),
-//     cert: fs.readFileSync('certificate/cert.pem')
-// };
-
-const port = 8080; //8443;
 
 /* Starting */
 console.log(chalk.yellow('\nStarting the server... \n'));
-server.listen(port, () => console.log(chalk.green(`Server started on port ${port}! \n`)));
+server.listen(config.port, () => console.log(chalk.green(`Server started on port ${config.port}! \n`)));
 //https.createServer(sslOptions, server).listen(port);

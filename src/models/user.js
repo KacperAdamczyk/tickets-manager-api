@@ -1,7 +1,10 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const emailValidator = require('email-validator');
 const chalk = require('chalk');
+
+const config = require('../config.js');
 
 /* Schema */
 const userSchema = mongoose.Schema({
@@ -14,6 +17,13 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    tokens: {
+        activationToken: {
+            type: String,
+            required: true
+        },
+        resetToken: String
+    },
     details: {
         firstName: String,
         lastName: String
@@ -21,30 +31,42 @@ const userSchema = mongoose.Schema({
 });
 
 /* Validators */
-userSchema.path('email').validate(email => emailValidator.validate(email), { message: '{VALUE} is not a valid e-mail address.' });
+userSchema.path('email').validate(email => emailValidator.validate(email), '{VALUE} is not a valid e-mail address.');
 
 /* Class */
 class UserClass {
-    add(email, password) {
-        return new Promise((resolve, reject) => {
+    async add(email, password) {
             this.email = email;
             this.password = UserClass.hashPassword(password);
-            console.log(chalk.blue(`Creating new user ${this.email} : ${this.password}`));
-            this.save()
-                .then(() => resolve({success: true}),
-                    err => {
-                        console.log(chalk.red(err));
-                        reject({message: err.message, success: false});
-                    });
-        });
+            this.tokens.activationToken = this.generateActivationToken();
+            console.log(chalk.blue(`Attempting to create new user: ${this.email}`));
+            try {
+                await this.save();
+            } catch (err) {
+                console.log(chalk.red(err.message));
+                throw err.message;
+            }
+            console.log(chalk.green('Success'));
     }
-    validPassword(password) {
+    validatePassword(password) {
         return bcrypt.compareSync(password, this.password);
     }
     static hashPassword(password) {
         return bcrypt.hashSync(password, bcrypt.genSaltSync(10), null);
     }
-
+    generateActivationToken() {
+        return jwt.sign(this.id, config.tokenSecret);
+    }
+    static async activateUser(token) {
+            let userId = jwt.verify(token, config.tokenSecret);
+        console.log('userID', userId);
+            try {
+                await this.findByIdAndUpdate(userId, { $set: { tokens: { activationToken: null }}}).exec();
+            } catch (err) {
+                console.log(chalk.red(err));
+                throw err;
+            }
+    }
 }
 
 userSchema.loadClass(UserClass);
