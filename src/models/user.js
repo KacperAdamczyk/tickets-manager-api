@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const emailValidator = require('email-validator');
 const chalk = require('chalk');
+const mail = require('../nodemailer');
 
 const config = require('../config.js');
 
@@ -48,6 +49,7 @@ class UserClass {
                 throw err.message;
             }
             console.log(chalk.green('Success'));
+            mail.sendActivation(this.email, `${config.url}/user/verify/${this.tokens.activationToken}`);
     }
     validatePassword(password) {
         return bcrypt.compareSync(password, this.password);
@@ -68,8 +70,8 @@ class UserClass {
                 if (user.tokens.activationToken !== token) {
                     throw 'Invalid token';
                 }
-                this.tokens.activationToken = null;
-                await this.save();
+                user.tokens.activationToken = null;
+                await user.save();
             } catch (err) {
                 console.log(chalk.red(err));
                 throw err;

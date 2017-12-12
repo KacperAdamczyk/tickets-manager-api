@@ -1,6 +1,6 @@
 module.exports = {
     port: 8080, //8443
-    url: `http://localhost:${this.port}`,
+    url: `http://localhost:${8080}`,
     sessionSecret: 'be-project-Kacper-Adamczyk-session',
     tokenSecret: 'be-project-Kacper-Adamczyk-token'
 };
