@@ -60,7 +60,7 @@ module.exports = passport => {
             );
     });
 
-    router.get('/user/verify/:token', (req, res) => {
+    router.get('/user/activate/:token', (req, res) => {
         User.activateUser(req.params.token)
             .then(() => res.status(200).send({ success: true }),
                 err => res.status(401).send({ success: false, message: err })

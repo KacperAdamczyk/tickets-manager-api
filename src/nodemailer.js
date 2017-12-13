@@ -33,9 +33,8 @@ function sendActivation(to, link) {
                 if (error) {
                     return console.log(error);
                 }
-                console.log(chalk.blue('Message sent: ', info.messageId));
+                console.log(chalk.blue('Activation message sent: ', info.messageId));
                 console.log(chalk.blue('Preview URL: ', nodemailer.getTestMessageUrl(info)));
-                return nodemailer.getTestMessageUrl(info);
             });
         }, err => console.log(chalk.red(err)));
 }
