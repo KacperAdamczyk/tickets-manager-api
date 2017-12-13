@@ -1,8 +1,11 @@
 const nodemailer = require('nodemailer');
 const chalk = require('chalk');
 
-function sendActivation(to, link) {
+let transporter = new Promise((resolve, reject) => {
     nodemailer.createTestAccount((err, account) => {
+        if (err) {
+            return reject(err);
+        }
         let transporter = nodemailer.createTransport({
             host: 'smtp.ethereal.email',
             port: 587,
@@ -12,6 +15,11 @@ function sendActivation(to, link) {
                 pass: account.pass
             }
         });
+        resolve(transporter);
+    });
+});
+
+function sendActivation(to, link) {
         let mailOptions = {
             from: '"BE Air" <no-replay@beair.com>',
             to, // list of receivers
@@ -20,15 +28,16 @@ function sendActivation(to, link) {
             `<a href="${link}">Click here</a>`
         };
 
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                return console.log(error);
-            }
-            console.log(chalk.blue('Message sent: ', info.messageId));
-            console.log(chalk.blue('Preview URL: ', nodemailer.getTestMessageUrl(info)));
-            return nodemailer.getTestMessageUrl(info);
-        });
-    });
+        transporter.then(transporter => {
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log(chalk.blue('Message sent: ', info.messageId));
+                console.log(chalk.blue('Preview URL: ', nodemailer.getTestMessageUrl(info)));
+                return nodemailer.getTestMessageUrl(info);
+            });
+        }, err => console.log(chalk.red(err)));
 }
 
 module.exports = { sendActivation };
