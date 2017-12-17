@@ -94,10 +94,10 @@ export default (passport: passport.PassportStatic): express.Router => {
     });
 
     router.post('/user/reset', (req: express.Request, res: express.Response) => {
-        if (!req.body.token || !req.body.oldPassword || !req.body.newPassword) {
-            res.status(400).send({ success: false, message: 'Provide token, old password and new password' });
+        if (!req.body.token || !req.body.newPassword) {
+            res.status(400).send({ success: false, message: 'Provide token and old password' });
         }
-        User.resetPassword(req.body.token, req.body.oldPassword, req.body.newPassword)
+        User.resetPassword(req.body.token, req.body.newPassword)
             .then(() => res.status(200).send({ success: true }),
                 err => res.status(401).send({ success: false, message: err })
             );

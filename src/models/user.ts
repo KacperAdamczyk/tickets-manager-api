@@ -179,16 +179,13 @@ export class User implements IUserClass {
             throw err;
         }
     }
-    static async resetPassword(token: string, oldPassword: string, newPassword: string) {
+    static async resetPassword(token: string, newPassword: string) {
         try {
             const payload: Payload = <Payload>jwt.verify(token, config.tokenSecret);
             const user = await this.findById(payload.id);
             if (payload.purpose !== tokenPurposes.passwordReset ||
                 user.tokens.resetToken !== token) {
                 throw 'Invalid token';
-            }
-            if (!user.validatePassword(oldPassword)) {
-                throw 'Invalid old password';
             }
             user.password = newPassword;
             user.tokens.resetToken = undefined;
