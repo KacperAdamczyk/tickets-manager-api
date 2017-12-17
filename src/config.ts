@@ -1,4 +1,4 @@
-module.exports = {
+export default {
     port: 8080, //8443
     url: `http://localhost:${8080}`,
     sessionSecret: 'be-project-Kacper-Adamczyk-session',
