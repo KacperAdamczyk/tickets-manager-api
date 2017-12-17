@@ -1,8 +1,8 @@
-const nodemailer = require('nodemailer');
-const chalk = require('chalk');
+import * as nodemailer from 'nodemailer';
+import chalk from 'chalk';
 
-let transporter = new Promise((resolve, reject) => {
-    nodemailer.createTestAccount((err, account) => {
+let transporter: Promise<any> = new Promise((resolve, reject) => {
+    nodemailer.createTestAccount((err, account: nodemailer.TestAccount) => {
         if (err) {
             return reject(err);
         }
@@ -19,27 +19,26 @@ let transporter = new Promise((resolve, reject) => {
     });
 });
 
-function sendActivation(to, link) {
+export function sendActivation(to: string, link: string) {
         let mailOptions = {
             from: '"BE Air" <no-replay@beair.com>',
-            to, // list of receivers
+            to,
             subject: 'Your verification link',
             html: '<h3>Hello!</h3>' +
             `<a href="${link}">Click here</a>`
         };
 
-        transporter.then(transporter => {
-            transporter.sendMail(mailOptions, (error, info) => {
+        transporter.then((transporter: nodemailer.Transport) => {
+            (<any>transporter).sendMail(<any>mailOptions, (error: any, info: nodemailer.SentMessageInfo) => {
                 if (error) {
                     return console.log(error);
                 }
                 console.log(chalk.blue('Activation message sent: ', info.messageId));
-                console.log(chalk.blue('Preview URL: ', nodemailer.getTestMessageUrl(info)));
+                console.log(chalk.blue('Preview URL: ', <string>nodemailer.getTestMessageUrl(info)));
             });
         }, err => console.log(chalk.red(err)));
 }
 
-module.exports = { sendActivation };
 
 
 

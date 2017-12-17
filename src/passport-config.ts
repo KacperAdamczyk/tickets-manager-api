@@ -1,14 +1,16 @@
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
+import * as passport from 'passport';
+import * as local from 'passport-local';
 
-const User = require('./models/user');
+import { User } from './models/user';
 
-passport.serializeUser(function(user, done) {
+const LocalStrategy = local.Strategy;
+
+passport.serializeUser((user: any, done: Function): void => {
     done(null, user.id);
 });
 
-passport.deserializeUser(function(id, done) {
-    User.findById(id).exec().then(user => done(null, user), err => done(err));
+passport.deserializeUser((id: string, done: Function): void => {
+    User.findById(id).then((user: User) => done(null, user), err => done(err));
 });
 
 passport.use(
@@ -16,16 +18,16 @@ passport.use(
         usernameField : 'email',
         passwordField : 'password',
     },
-    (email, password, done) => {
-        User.findOne({ 'email': email }).exec()
-            .then(user => {
+    (email: string, password: string, done: Function) => {
+        User.findOne({ 'email': email })
+            .then((user: User | null) => {
                 if (!user) {
                     return done(null, false, { success: false, message: 'User not found' });
                 }
                 if (!user.validatePassword(password)) {
                     return done(null, false, { success: false, message: 'Incorrect password' });
                 }
-                if (user.tokens.activationToken) {
+                if (user.tokens && user.tokens.activationToken) {
                     return done(null, false, { success: false, message: 'User is not activated' });
                 }
                 done(null, user);
@@ -34,5 +36,6 @@ passport.use(
             });
     }));
 
-module.exports = passport;
+export default passport;
+
 
