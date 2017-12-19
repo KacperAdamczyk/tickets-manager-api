@@ -1,13 +1,10 @@
-import * as mongoose from "mongoose";
 import chalk from 'chalk';
+import * as mongoose from 'mongoose';
 
 export abstract class SchemaOperations<T extends mongoose.Document> {
-    protected readonly instance: T;
-    constructor(instance: T) {
-        this.instance = instance;
-    }
-    protected static _wrap<T extends mongoose.Document, R>(pr: Promise<T | null>, Wrapper: any, err: string): Promise<R> {
-        return pr.then(instance => {
+    protected static _wrap<T extends mongoose.Document, R>(pr: Promise<T | null>, Wrapper: any, err: string)
+    : Promise<R> {
+        return pr.then((instance: T | null) => {
             if (!instance) {
                 throw err;
             }
@@ -20,36 +17,43 @@ export abstract class SchemaOperations<T extends mongoose.Document> {
     protected static _findOne<T extends mongoose.Document>(model: mongoose.Model<T>, query: object): Promise<T | null> {
         return model.findOne(query).exec();
     }
+    protected readonly instance: T;
+    constructor(instance: T) {
+        this.instance = instance;
+    }
 }
 
 export function validator(throwError: boolean = false) {
-    return function(constructor: any) {
+    return (constructor: any) => {
         let first = true;
-        let methodError = (name: string) => `Missing method ${chalk.underline(name)} on class ${chalk.underline(constructor.name)}`;
-        let propertyError = (name: string) => `Missing property ${chalk.underline(name)} on class ${chalk.underline(constructor.name)}`;
+        const methodError = (name: string) =>
+            `Missing method ${chalk.underline(name)} on class ${chalk.underline(constructor.name)}`;
+        const propertyError = (name: string) =>
+            `Missing property ${chalk.underline(name)} on class ${chalk.underline(constructor.name)}`;
         if (Object.getPrototypeOf(constructor) !== SchemaOperations) {
             line();
-            console.log(chalk.red(`Class ${chalk.underline(constructor.name)} does not inherits from class ${chalk.underline(SchemaOperations.prototype.constructor.name)}`))
+            console.log(chalk.red(`Class ${chalk.underline(constructor.name)} does not inherits from class` +
+                `${chalk.underline(SchemaOperations.prototype.constructor.name)}`));
         }
         if (!constructor.model) {
             line();
-            console.log(chalk.red(propertyError('model')))
+            console.log(chalk.red(propertyError('model')));
         }
         if (!constructor.wrap) {
             line();
-            console.log(chalk.red(methodError('wrap')))
+            console.log(chalk.red(methodError('wrap')));
         }
         if (!constructor.findById) {
             line();
-            console.log(chalk.red(methodError('findById')))
+            console.log(chalk.red(methodError('findById')));
         }
         if (!constructor.findOne) {
             line();
-            console.log(chalk.red(methodError('findOne')))
+            console.log(chalk.red(methodError('findOne')));
         }
-        if(!first) {
+        if (!first) {
             console.log('\n');
-           dot(100);
+            dot(100);
         }
         function line() {
             if (first) {
@@ -57,16 +61,17 @@ export function validator(throwError: boolean = false) {
                 console.log('\n');
                 dot(100);
                 console.log(chalk.blue('Schema class implementation validator\n'));
-                if(throwError)
-                    throw 'Schema class validation error';
+                if (throwError) {
+                    throw new Error('Schema class validation error');
+                }
             }
         }
         function dot(n: number) {
-            let str ='';
+            let str = '';
             for (let i = 0; i < n; i++) {
                 str += '*';
             }
             console.log(chalk.bgBlue(chalk.red(str)));
         }
-    }
+    };
 }
