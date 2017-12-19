@@ -2,9 +2,11 @@
   "name": "nodejs-express",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.ts",
   "scripts": {
-    "start": "nodemon --exec node -r ts-node/register -- server.ts",
+    "start": "nodemon --exec ts-node -- server.ts",
+    "start-fix": "nodemon --exec node -r ts-node/register -- --inspect server.ts",
+    "lint": "tslint --project tsconfig.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Kacper Adamczyk",

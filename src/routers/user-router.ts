@@ -4,8 +4,6 @@ import * as express from 'express';
 import * as passport from 'passport';
 /* Models */
 import { User } from '../models/user';
-/* Variables */
-const indexUrl = '../dist/index.html';
 
 /* Defining routes */
 
@@ -32,12 +30,12 @@ export default (passport: passport.PassportStatic): express.Router => {
     });
 
     router.get('/logout', (req: express.Request, res: express.Response) => {
-        if(!req.session) {
+        if (!req.session) {
             return res.status(401).send( {success: false} );
         }
         req.logout();
         req.session.destroy(err => {
-            if(err) {
+            if (err) {
                 console.log(`Session destroy error: ${err}`);
                 res.status(500).send({ success: false, message: err });
             }
@@ -46,7 +44,7 @@ export default (passport: passport.PassportStatic): express.Router => {
     });
 
     router.get('/user', isAuthenticated, (req: express.Request, res: express.Response) => {
-        if(!req.session) {
+        if (!req.session) {
             return res.status(401).send( {success: false} );
         }
         User.findById(req.session.passport.user)
@@ -59,7 +57,7 @@ export default (passport: passport.PassportStatic): express.Router => {
         if (!req.body.email || !req.body.password) {
             res.status(400).send({ success: false, message: 'Provide valid email and password' });
         }
-        let user = new User();
+        const user = new User();
         user.add(req.body.email, req.body.password)
             .then(() => res.status(201).send({ success: true }),
                 (err: any) => res.status(400).send({ success: false, message: err })
@@ -94,17 +92,13 @@ export default (passport: passport.PassportStatic): express.Router => {
     });
 
     router.post('/user/reset', (req: express.Request, res: express.Response) => {
-        if (!req.body.token || !req.body.oldPassword || !req.body.newPassword) {
-            res.status(400).send({ success: false, message: 'Provide token, old password and new password' });
+        if (!req.body.token || !req.body.newPassword) {
+            res.status(400).send({ success: false, message: 'Provide token and old password' });
         }
-        User.resetPassword(req.body.token, req.body.oldPassword, req.body.newPassword)
+        User.resetPassword(req.body.token, req.body.newPassword)
             .then(() => res.status(200).send({ success: true }),
                 err => res.status(401).send({ success: false, message: err })
             );
-    });
-
-    router.get('*', (req, res) => {
-        res.sendFile(path.join(__dirname, indexUrl));
     });
 
     /* Middleware */
