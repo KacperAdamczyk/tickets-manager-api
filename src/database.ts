@@ -24,7 +24,8 @@ function connect(maxTries = 10, timeout = 5000): void {
             }, (err: any) => {
                 console.log(chalk.red(`\n${err}\n`));
                 if (++n <= maxTries || maxTries < 0) {
-                    console.log(chalk.blue(`Attempting to reconnect in ${timeout}ms ${maxTries > 0 ? `[${n}/${maxTries}]\n` : ''}`));
+                    console.log(chalk.blue(`Attempting to reconnect in ` +
+                        `${timeout}ms ${maxTries > 0 ? `[${n}/${maxTries}]\n` : ''}`));
                     setTimeout(() => reconnect(), timeout);
                 }
             });

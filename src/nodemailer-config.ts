@@ -6,7 +6,7 @@ const transporter: Promise<any> = new Promise((resolve, reject) => {
         if (err) {
             return reject(err);
         }
-        const transporter = nodemailer.createTransport({
+        const transporterInstance = nodemailer.createTransport({
             auth: {
                 user: account.user,
                 pass: account.pass,
@@ -15,7 +15,7 @@ const transporter: Promise<any> = new Promise((resolve, reject) => {
             port: 587,
             secure: false, // true for 465, false for other ports
         });
-        resolve(transporter);
+        resolve(transporterInstance);
     });
 });
 
@@ -28,8 +28,8 @@ export function sendActivation(to: string, link: string) {
             `<a href="${link}">Click here</a>`,
         };
 
-        transporter.then((transporter: nodemailer.Transport) => {
-            (<any> transporter).sendMail(<any> mailOptions, (error: any, info: nodemailer.SentMessageInfo) => {
+        transporter.then((transporterInstance: nodemailer.Transport) => {
+            (<any> transporterInstance).sendMail(<any> mailOptions, (error: any, info: nodemailer.SentMessageInfo) => {
                 if (error) {
                     return console.log(error);
                 }

@@ -10,8 +10,8 @@ import * as mail from '../nodemailer-config';
 import config from '../config';
 
 enum tokenPurposes {
-    userActivation,
-    passwordReset
+    userActivation = 'user-activation',
+    passwordReset = 'password-reset'
 };
 
 interface Payload {
@@ -20,8 +20,8 @@ interface Payload {
 }
 
 interface ITokens {
-    activationToken?: string;
-    resetToken?: string;
+    activationToken?: string | null;
+    resetToken?: string | null;
 }
 
 interface IDetails {
@@ -140,7 +140,7 @@ export class User extends SchemaOperations<IUser> implements IUserClass {
                     user.tokens.activationToken !== token) {
                     throw 'Invalid token';
                 }
-                user.tokens.activationToken = undefined;
+                user.tokens.activationToken = null;
                 await user.instance.save();
             } catch (err) {
                 console.log(chalk.red(err));
@@ -181,7 +181,7 @@ export class User extends SchemaOperations<IUser> implements IUserClass {
                 throw 'Invalid token';
             }
             user.password = newPassword;
-            user.tokens.resetToken = undefined;
+            user.tokens.resetToken = null;
             await user.instance.save();
         } catch (err) {
             console.log(chalk.red(err));

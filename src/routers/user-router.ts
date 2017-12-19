@@ -1,13 +1,14 @@
 /* Dependencies */
-import * as path from 'path';
 import * as express from 'express';
+import * as session from 'express-session';
 import * as passport from 'passport';
+import * as path from 'path';
 /* Models */
 import { User } from '../models/user';
 
 /* Defining routes */
 
-export default (passport: passport.PassportStatic): express.Router => {
+export default (passportInstance: passport.PassportStatic): express.Router => {
 
     /* --- User API ---
     * METHOD     URL                                               MIDDLEWARE
@@ -25,7 +26,7 @@ export default (passport: passport.PassportStatic): express.Router => {
 
     const router: express.Router = express.Router();
 
-    router.post('/login', passport.authenticate('local'), (req: express.Request, res: express.Response) => {
+    router.post('/login', passportInstance.authenticate('local'), (req: express.Request, res: express.Response) => {
         res.status(200).send({ success: true });
     });
 
@@ -34,7 +35,7 @@ export default (passport: passport.PassportStatic): express.Router => {
             return res.status(401).send( {success: false} );
         }
         req.logout();
-        req.session.destroy(err => {
+        req.session.destroy((err) => {
             if (err) {
                 console.log(`Session destroy error: ${err}`);
                 res.status(500).send({ success: false, message: err });
@@ -49,7 +50,7 @@ export default (passport: passport.PassportStatic): express.Router => {
         }
         User.findById(req.session.passport.user)
             .then((user: User) => res.send(user),
-                () => res.status(404).send({ success: false, message: 'User not found' })
+                () => res.status(404).send({ success: false, message: 'User not found' }),
             );
     });
 
@@ -60,34 +61,37 @@ export default (passport: passport.PassportStatic): express.Router => {
         const user = new User();
         user.add(req.body.email, req.body.password)
             .then(() => res.status(201).send({ success: true }),
-                (err: any) => res.status(400).send({ success: false, message: err })
+                (err: any) => res.status(400).send({ success: false, message: err }),
             );
     });
 
     router.get('/user/activate/:token', (req: express.Request, res: express.Response) => {
         User.activateUser(req.params.token)
             .then(() => res.status(200).send({ success: true }),
-                err => res.status(401).send({ success: false, message: err })
+                (err) => res.status(401).send({ success: false, message: err }),
             );
     });
 
     router.post('/user/change', isAuthenticated, (req: express.Request, res: express.Response) => {
-        if (!req.body.oldPassword || !req.body.newPassword) {
+        if (!req.body.oldPassword || !req.body.newPassword ) {
             res.status(400).send({ success: false, message: 'Provide old and new password' });
         }
-        User.findById((<any>req).session.passport.user)
-            .then(user => {
-                return user.changePassword(req.body.oldPassword, req.body.newPassword)
+        if (!req.session) {
+            return void res.status(400).send('User not authenticated');
+        }
+        User.findById(req.session.passport.user)
+            .then((user) => {
+                return user.changePassword(req.body.oldPassword, req.body.newPassword);
             })
             .then(() => res.status(200).send({ success: true }),
-                err => res.status(401).send({ success: false, message: err })
+                (err) => res.status(401).send({ success: false, message: err }),
             );
     });
 
     router.get('/user/reset/:email', (req: express.Request, res: express.Response) => {
         User.generateResetPasswordRequest(req.params.email)
            .then(() => res.status(200).send({ success: true }),
-               err => res.status(401).send({ success: false, message: err })
+               (err) => res.status(401).send({ success: false, message: err }),
            );
     });
 
@@ -97,7 +101,7 @@ export default (passport: passport.PassportStatic): express.Router => {
         }
         User.resetPassword(req.body.token, req.body.newPassword)
             .then(() => res.status(200).send({ success: true }),
-                err => res.status(401).send({ success: false, message: err })
+                (err) => res.status(401).send({ success: false, message: err }),
             );
     });
 
@@ -113,6 +117,3 @@ export default (passport: passport.PassportStatic): express.Router => {
 
     return router;
 };
-
-
-
