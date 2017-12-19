@@ -1,13 +1,13 @@
 /* Dependencies */
-import * as path from 'path';
 import * as express from 'express';
 import * as passport from 'passport';
+import * as path from 'path';
 /* Models */
 import { User } from '../models/user';
 
 /* Defining routes */
 
-export default (passport: passport.PassportStatic): express.Router => {
+export default (passportInstance: passport.PassportStatic): express.Router => {
 
     /* --- User API ---
     * METHOD     URL                                               MIDDLEWARE
@@ -25,7 +25,7 @@ export default (passport: passport.PassportStatic): express.Router => {
 
     const router: express.Router = express.Router();
 
-    router.post('/login', passport.authenticate('local'), (req: express.Request, res: express.Response) => {
+    router.post('/login', passportInstance.authenticate('local'), (req: express.Request, res: express.Response) => {
         res.status(200).send({ success: true });
     });
 
