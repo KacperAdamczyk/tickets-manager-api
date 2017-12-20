@@ -25,15 +25,15 @@ interface ITokens {
 }
 
 interface IDetails {
-    firstName: string;
-    lastName: string;
+    firstName?: string;
+    lastName?: string;
 }
 
 interface IUserClass {
     email: string;
     password: string;
     admin: boolean;
-    tokens: ITokens;
+    tokens?: ITokens;
     details?: IDetails;
 }
 
@@ -81,8 +81,8 @@ export class User extends SchemaOperations<IUser> implements IUserClass {
     set password(v: string) { this.instance.password = User.hashPassword(v); }
     get admin() { return this.instance.admin; }
     set admin(v: boolean) { this.instance.admin = v; }
-    get tokens(): ITokens { return this.instance.tokens }
-    set tokens(v: ITokens) { this.instance.tokens = v; }
+    get tokens(): ITokens | undefined { return this.instance.tokens }
+    set tokens(v: ITokens | undefined) { this.instance.tokens = v; }
 
     constructor(instance: IUser = new User.model()) {
         super(instance);
@@ -137,6 +137,7 @@ export class User extends SchemaOperations<IUser> implements IUserClass {
                 const payload: Payload = <Payload>jwt.verify(token, config.tokenSecret);
                 const user = await this.findById(payload.id);
                 if (payload.purpose !== tokenPurposes.userActivation ||
+                    !user.tokens ||
                     user.tokens.activationToken !== token) {
                     throw 'Invalid token';
                 }
@@ -164,6 +165,8 @@ export class User extends SchemaOperations<IUser> implements IUserClass {
     static async generateResetPasswordRequest(email: string) {
         try {
             const user = await this.findOne({ email });
+            if (!user.tokens)
+                user.tokens = {};
             user.tokens.resetToken = user.generateResetToken();
             await user.instance.save();
         } catch (err) {
@@ -177,6 +180,7 @@ export class User extends SchemaOperations<IUser> implements IUserClass {
             const payload: Payload = <Payload>jwt.verify(token, config.tokenSecret);
             const user = await this.findById(payload.id);
             if (payload.purpose !== tokenPurposes.passwordReset ||
+                !user.tokens ||
                 user.tokens.resetToken !== token) {
                 throw 'Invalid token';
             }
