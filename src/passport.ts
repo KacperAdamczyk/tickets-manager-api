@@ -2,7 +2,7 @@ import * as passport from 'passport';
 import * as local from 'passport-local';
 
 import { IVerifyOptions } from 'passport-local';
-import { User } from './models/user';
+import User from './models/user';
 
 const LocalStrategy = local.Strategy;
 
@@ -11,7 +11,7 @@ passport.serializeUser((user: any, done): void => {
 });
 
 passport.deserializeUser((id: string, done): void => {
-    User.findById(id).then((user: User) => done(null, user), err => done(err));
+    User.findById(id).then((user) => done(null, user ? user : undefined), (err) => done(err));
 });
 
 passport.use(
@@ -21,7 +21,7 @@ passport.use(
     },
     (email: string, password: string, done) => {
         User.findOne({ email })
-            .then((user: User | null) => {
+            .then((user) => {
                 if (!user) {
                     return done(null, false, <IVerifyOptions> { success: false, message: 'User not found' });
                 }
@@ -38,5 +38,3 @@ passport.use(
     }));
 
 export default passport;
-
-

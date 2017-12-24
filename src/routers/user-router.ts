@@ -3,7 +3,7 @@ import * as express from 'express';
 import * as session from 'express-session';
 import * as passport from 'passport';
 /* Models */
-import { User } from '../models/user';
+import User from '../models/user';
 
 /* Defining routes */
 
@@ -48,7 +48,7 @@ export default (passportInstance: passport.PassportStatic): express.Router => {
             return res.status(401).send( {success: false} );
         }
         User.findById(req.session.passport.user)
-            .then((user: User) => res.send(user),
+            .then((user) => res.send(user),
                 () => res.status(404).send({ success: false, message: 'User not found' }),
             );
     });
@@ -80,6 +80,9 @@ export default (passportInstance: passport.PassportStatic): express.Router => {
         }
         User.findById(req.session.passport.user)
             .then((user) => {
+                if (!user) {
+                    throw new Error('User not found').message;
+                }
                 return user.changePassword(req.body.oldPassword, req.body.newPassword);
             })
             .then(() => res.status(200).send({ success: true }),

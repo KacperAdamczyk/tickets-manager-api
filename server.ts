@@ -42,8 +42,8 @@ server.use(passport.session());
 server.use(morgan('dev'));
 
 server.use(db.downProtector);
-server.use(router);
 server.use(userRouter(passport));
+server.use(router);
 
 /* Starting */
 console.log(chalk.green('\nStarting the server... \n'));
