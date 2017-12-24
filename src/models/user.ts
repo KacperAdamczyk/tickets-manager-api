@@ -5,7 +5,7 @@ import * as emailValidator from 'email-validator';
 import chalk from 'chalk';
 
 import { SchemaOperations, validator } from './schema-operations';
-import * as mail from '../nodemailer-config';
+import * as mail from '../nodemailer/nodemailer';
 
 import config from '../config';
 

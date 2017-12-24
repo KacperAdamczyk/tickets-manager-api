@@ -2,7 +2,6 @@
 import * as express from 'express';
 import * as session from 'express-session';
 import * as passport from 'passport';
-import * as path from 'path';
 /* Models */
 import { User } from '../models/user';
 

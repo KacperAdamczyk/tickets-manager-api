@@ -14,7 +14,7 @@ import * as path from 'path';
 /* Local imports */
 import config from './src/config';
 import db from './src/database';
-import passport from './src/passport-config';
+import passport from './src/passport';
 import router from './src/routers/router';
 import userRouter from './src/routers/user-router';
 
