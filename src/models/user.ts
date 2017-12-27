@@ -1,164 +1,157 @@
 import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
-import * as emailValidator from 'email-validator';
-import db from '../database';
 import chalk from 'chalk';
-import { Typegoose, prop, staticMethod, ModelType, instanceMethod, InstanceType } from 'typegoose';
+import * as emailValidator from 'email-validator';
+import * as jwt from 'jsonwebtoken';
+import { instanceMethod, InstanceType, ModelType, prop, staticMethod, Typegoose } from 'typegoose';
+import db from '../database';
+import { messages } from '../routers/user-router';
 
-import { SchemaOperations, validator } from './schema-operations';
 import * as mail from '../nodemailer/nodemailer';
 
 import config from '../config';
 
 enum tokenPurposes {
     userActivation = 'user-activation',
-    passwordReset = 'password-reset'
-};
+    passwordReset = 'password-reset',
+}
 
-interface Payload {
+interface IPayload {
     id: string;
     purpose: tokenPurposes;
 }
-/* Class */
 
+// noinspection TsLint
 class Tokens {
     @prop()
-    activationToken?: string;
+    public activationToken?: string;
     @prop()
-    resetToken?: string;
+    public resetToken?: string;
 }
 
+// noinspection TsLint
 class Details {
     @prop()
-    firstName: string;
+    public firstName: string;
     @prop()
-    lastName: string;
+    public lastName: string;
 }
 
+// noinspection TsLint
 class User extends Typegoose {
+    @staticMethod
+    public static async activateUser(this: ModelType<User>, token: string): Promise<void | string> {
+        const payload: IPayload = <IPayload> jwt.verify(token, config.tokenSecret);
+        const user = await this.findById(payload.id).exec();
+        if (!user ||
+            payload.purpose !== tokenPurposes.userActivation ||
+            user.tokens.activationToken !== token) {
+            return Promise.reject(messages.invalidToken);
+        }
+        user.tokens.activationToken = undefined;
+        await user.save();
+    }
+
+    @staticMethod
+    public static async generateActivationRequest(this: ModelType<User>, email: string) {
+        const user = await this.findOne({ email }).exec();
+        if (!user) {
+            return Promise.reject(messages.userNotFound);
+        }
+        if (!user.tokens.activationToken) {
+            return Promise.reject(messages.alreadyActivated);
+        }
+        user.tokens.activationToken = user.generateActivationToken();
+        await user.save();
+        mail.sendActivation(user.email, `${config.url}/user/activate/${user.tokens.activationToken}`);
+    }
+
+    @staticMethod
+    public static async generateResetPasswordRequest(this: ModelType<User>, email: string) {
+        const user = await this.findOne({ email }).exec();
+        if (!user) {
+            return Promise.reject(messages.userNotFound);
+        }
+        user.tokens.resetToken = user.generateResetToken();
+        await user.save();
+    }
+
+    @staticMethod
+    public static async resetPassword(this: ModelType<User>, token: string, newPassword: string) {
+        const payload: IPayload = <IPayload> jwt.verify(token, config.tokenSecret);
+        const user = await this.findById(payload.id).exec();
+        if (!user ||
+            payload.purpose !== tokenPurposes.passwordReset ||
+            user.tokens.resetToken !== token) {
+            return Promise.reject(messages.invalidToken);
+        }
+        user.password = User.hashPassword(newPassword);
+        user.tokens.resetToken = undefined;
+        await user.save();
+    }
+
+    @staticMethod
+    private static hashPassword(password: string): string {
+        return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+    }
+
+    @prop()
+    public readonly tokens: Tokens;
     @prop({ unique: true, required: true })
-    email: string;
+    private email: string;
     @prop()
-    password: string;
+    private password: string;
     @prop({ default: false })
-    admin: boolean;
+    private admin: boolean;
     @prop()
-    tokens: Tokens;
-    @prop()
-    details: Details;
+    private details: Details;
 
     @instanceMethod
-    async add(this: InstanceType<User>, email: string, password: string) {
+    public async add(this: InstanceType<User>, email: string, password: string) {
         if (!this.validateEmail(email)) {
-            throw `${email} is not a valid e-mail address`;
+            Promise.reject(messages.isNotValidEmail(email));
         }
         this.email = email;
         this.password = User.hashPassword(password);
         console.log(chalk.blue(`Attempting to create new user: ${this.email}`));
         this.tokens.activationToken = this.generateActivationToken();
-        try {
-            await this.save();
-        } catch (err) {
-            console.log(chalk.red(err.message));
-            throw err.message;
-        }
-        console.log(chalk.green('Success'));
+        await this.save();
         mail.sendActivation(this.email, `${config.url}/user/activate/${this.tokens.activationToken}`);
     }
 
     @instanceMethod
-    validateEmail(email: string) {
+    public async changePassword(this: InstanceType<User>, oldPassowrd: string, newPassword: string) {
+            if (!this.validatePassword(oldPassowrd)) {
+                return Promise.reject(messages.invalidOldPassword);
+            }
+            this.password = User.hashPassword(newPassword);
+            await this.save();
+    }
+
+    @instanceMethod
+    public validatePassword(password: string): boolean {
+        return bcrypt.compareSync(password, this.password);
+    }
+
+    @instanceMethod
+    private validateEmail(email: string) {
         return emailValidator.validate(email);
     }
 
     @instanceMethod
-    validatePassword(password: string): boolean {
-        return bcrypt.compareSync(password, this.password);
-    }
-
-    @staticMethod
-    static hashPassword(password: string): string {
-        return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+    private generateActivationToken(this: InstanceType<User>): string {
+        return jwt.sign({ id: this.id, purpose: tokenPurposes.userActivation }, config.tokenSecret,
+            { expiresIn: '1d' });
     }
 
     @instanceMethod
-    generateActivationToken(this: InstanceType<User>): string {
-        return jwt.sign({ id: this.id, purpose: tokenPurposes.userActivation }, config.tokenSecret, { expiresIn: '1d' });
-    }
-
-    @instanceMethod
-    generateResetToken(this: InstanceType<User>): string {
-        return jwt.sign({ id: this.id, purpose: tokenPurposes.passwordReset }, config.tokenSecret, { expiresIn: '1h' });
-    }
-
-    @staticMethod
-    static async activateUser(this: ModelType<User>, token: string): Promise<void | string> {
-        try {
-            const payload: Payload = <Payload>jwt.verify(token, config.tokenSecret);
-            const user = await this.findById(payload.id);
-            if (!user ||
-                payload.purpose !== tokenPurposes.userActivation ||
-                user.tokens.activationToken !== token) {
-                throw 'Invalid token';
-            }
-            user.tokens.activationToken = undefined;
-            await user.save();
-        } catch (err) {
-            console.log(chalk.red(err));
-            throw err;
-        }
-    }
-
-    @instanceMethod
-    async changePassword(this: InstanceType<User>, oldPassowrd: string, newPassword: string) {
-        try{
-            if (!this.validatePassword(oldPassowrd)) {
-                throw 'Old password is not correct';
-            }
-            this.password = newPassword;
-            await this.save();
-        } catch (err) {
-            console.log(chalk.red(err));
-            throw err;
-        }
-    }
-
-    @staticMethod
-    static async generateResetPasswordRequest(this: ModelType<User>, email: string) {
-        try {
-            const user = await this.findOne({ email });
-            if (!user)
-                throw 'User not found';
-            user.tokens.resetToken = user.generateResetToken();
-            await user.save();
-        } catch (err) {
-            console.log(chalk.red(err));
-            throw err;
-        }
-    }
-
-    @staticMethod
-    static async resetPassword(this: ModelType<User>, token: string, newPassword: string) {
-        try {
-            const payload: Payload = <Payload>jwt.verify(token, config.tokenSecret);
-            const user = await this.findById(payload.id);
-            if (!user ||
-                payload.purpose !== tokenPurposes.passwordReset ||
-                user.tokens.resetToken !== token) {
-                throw 'Invalid token';
-            }
-            user.password = newPassword;
-            user.tokens.resetToken = undefined;
-            await user.save();
-        } catch (err) {
-            console.log(chalk.red(err));
-            throw err;
-        }
+    private generateResetToken(this: InstanceType<User>): string {
+        return jwt.sign({ id: this.id, purpose: tokenPurposes.passwordReset }, config.tokenSecret,
+            { expiresIn: '1h' });
     }
 }
 
 export default new User().getModelForClass(User,
     { existingMongoose: db.mongoose,
         existingConnection: db.mongoose.connection,
-        //schemaOptions: { collection: 'users' }
+        // schemaOptions: { collection: 'users' }
     });

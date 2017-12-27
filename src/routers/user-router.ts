@@ -1,121 +1,189 @@
 /* Dependencies */
 import * as express from 'express';
-import * as session from 'express-session';
 import * as passport from 'passport';
-/* Models */
+
+import { getErr, isAuthenticated } from '../common';
 import User from '../models/user';
 
-/* Defining routes */
+/* --- User API ---
+* -METHOD-         -URL-                                            -MIDDLEWARE-
+*   POST        /login (email, password)
+*   GET         /logout
+*   GET         /user                                             isAuthenticated
+*   POST        /user/create
+*   GET         /user/verify/:token
+*   POST        /user/change (oldPassword, newPassword)           isAuthenticated
+*   GET         /user/reset/:email
+*   POST        /user/reset (token, oldPassword, newPassword)
+* --- Error object ---
+* success: Boolean - Indicates success of operation
+* message: String  - If failed provides description of the error
+*/
+
+interface IMessage {
+    success: boolean;
+    message?: string;
+    code?: number;
+}
+
+const messages = {
+    success: {
+        success: true,
+    },
+    fail: {
+        success: false,
+    },
+    internalError: {
+        success: false,
+        message: 'Internal server error',
+        code: 0,
+    },
+    userNotAuthenticated: {
+        success: false,
+        message: 'User not authenticated',
+        code: 1,
+    },
+    userNotFound: {
+        success: false,
+        message: 'User not found',
+        code: 2,
+    },
+    invalidEmailAndOrPassword: {
+        success: false,
+        message: 'Invalid e-mail address and/or password',
+        code: 3,
+    },
+    invalidOldAndOrNewPassword: {
+        success: false,
+        message: 'Invalid old password and/or new password',
+        code: 4,
+    },
+    invalidTokenAndOrOldPassword: {
+        success: false,
+        message: 'Invalid token and/or old password',
+        code: 5,
+    },
+    invalidToken: {
+        success: false,
+        message: 'Invalid token',
+        code: 6,
+    },
+    isNotValidEmail(email: string) {
+        return {
+        success: false,
+        message: `${email} is not valid e-mail address`,
+        code: 7,
+        };
+    },
+    invalidOldPassword: {
+        success: false,
+        message: 'Invalid old password',
+        code: 8,
+    },
+    alreadyActivated: {
+        success: false,
+        message: 'User already activated',
+        code: 9,
+    },
+};
 
 export default (passportInstance: passport.PassportStatic): express.Router => {
-
-    /* --- User API ---
-    * METHOD     URL                                               MIDDLEWARE
-    *  POST    /login (email, password)
-    *  GET     /logout
-    *  GET     /user                                             isAuthenticated
-    *  POST    /user/create
-    *  GET     /user/verify/:token
-    *  POST    /user/change (oldPassword, newPassword)           isAuthenticated
-    *  GET     /user/reset/:email
-    *  POST    /user/reset (token, oldPassword, newPassword)
-    * --- Error object ---
-    * success: Boolean - Indicates success of operation
-    * message: String  - If failed provides description of the error */
-
     const router: express.Router = express.Router();
 
-    router.post('/login', passportInstance.authenticate('local'), (req: express.Request, res: express.Response) => {
-        res.status(200).send({ success: true });
+    router.post('/login', passportInstance.authenticate('local'), (req, res) => {
+        res.status(200).send(messages.success);
     });
 
-    router.get('/logout', (req: express.Request, res: express.Response) => {
+    router.get('/logout', (req, res) => {
         if (!req.session) {
-            return res.status(401).send( {success: false} );
+            return res.status(401).send(messages.userNotAuthenticated);
         }
         req.logout();
         req.session.destroy((err) => {
             if (err) {
                 console.log(`Session destroy error: ${err}`);
-                res.status(500).send({ success: false, message: err });
+                res.status(500).send(messages.internalError);
             }
         });
-        res.status(200).send({ success: true });
+        res.status(200).send(messages.success);
     });
 
-    router.get('/user', isAuthenticated, (req: express.Request, res: express.Response) => {
+    router.get('/user', isAuthenticated, (req, res) => {
         if (!req.session) {
-            return res.status(401).send( {success: false} );
+            return res.status(401).send(messages.userNotAuthenticated);
         }
-        User.findById(req.session.passport.user)
+        getErr(User.findById(req.session.passport.user).exec())
             .then((user) => res.send(user),
-                () => res.status(404).send({ success: false, message: 'User not found' }),
+                () => res.status(404).send(messages.userNotFound),
             );
     });
 
-    router.post('/user/create', (req: express.Request, res: express.Response) => {
+    router.post('/user', (req, res) => {
         if (!req.body.email || !req.body.password) {
-            res.status(400).send({ success: false, message: 'Provide valid email and password' });
+            res.status(400).send(messages.invalidEmailAndOrPassword);
         }
         const user = new User();
-        user.add(req.body.email, req.body.password)
-            .then(() => res.status(201).send({ success: true }),
-                (err: any) => res.status(400).send({ success: false, message: err }),
+        getErr(user.add(req.body.email, req.body.password))
+            .then(() => res.status(201).send(messages.success),
+                (err) => res.status(400).send(err),
             );
     });
 
-    router.get('/user/activate/:token', (req: express.Request, res: express.Response) => {
-        User.activateUser(req.params.token)
-            .then(() => res.status(200).send({ success: true }),
-                (err) => res.status(401).send({ success: false, message: err }),
+    router.get('/user/activate/:token', (req, res) => {
+        getErr(User.activateUser(req.params.token))
+            .then(() => res.status(200).send(messages.success),
+                (err) => res.status(401).send(err),
             );
     });
 
-    router.post('/user/change', isAuthenticated, (req: express.Request, res: express.Response) => {
+    router.get('/user/reactivate/:email', (req, res) => {
+        getErr(User.generateActivationRequest(req.params.email))
+            .then(() => res.status(200).send(messages.success),
+                (err) => res.status(401).send(err),
+            );
+    });
+
+    router.post('/user/change-password', isAuthenticated, (req, res) => {
         if (!req.body.oldPassword || !req.body.newPassword ) {
-            res.status(400).send({ success: false, message: 'Provide old and new password' });
+            res.status(400).send(messages.invalidOldAndOrNewPassword);
         }
         if (!req.session) {
-            return void res.status(400).send('User not authenticated');
+            return void res.status(400).send(messages.userNotAuthenticated);
         }
-        User.findById(req.session.passport.user)
+        getErr(User.findById(req.session.passport.user).exec()
             .then((user) => {
                 if (!user) {
-                    throw new Error('User not found').message;
+                    return Promise.reject(messages.userNotFound);
                 }
                 return user.changePassword(req.body.oldPassword, req.body.newPassword);
-            })
-            .then(() => res.status(200).send({ success: true }),
-                (err) => res.status(401).send({ success: false, message: err }),
+            }))
+            .then(() => res.status(200).send(messages.success),
+                (err) => res.status(401).send(err),
             );
     });
 
-    router.get('/user/reset/:email', (req: express.Request, res: express.Response) => {
-        User.generateResetPasswordRequest(req.params.email)
-           .then(() => res.status(200).send({ success: true }),
-               (err) => res.status(401).send({ success: false, message: err }),
+    router.get('/user/reset-password/:email', (req, res) => {
+        getErr(User.generateResetPasswordRequest(req.params.email))
+           .then(() => res.status(200).send(messages.success),
+               (err) => res.status(401).send(err),
            );
     });
 
-    router.post('/user/reset', (req: express.Request, res: express.Response) => {
+    router.post('/user/reset-password', (req, res) => {
         if (!req.body.token || !req.body.newPassword) {
-            res.status(400).send({ success: false, message: 'Provide token and old password' });
+            res.status(400).send(messages.invalidTokenAndOrOldPassword);
         }
-        User.resetPassword(req.body.token, req.body.newPassword)
-            .then(() => res.status(200).send({ success: true }),
-                (err) => res.status(401).send({ success: false, message: err }),
+        getErr(User.resetPassword(req.body.token, req.body.newPassword))
+            .then(() => res.status(200).send(messages.success),
+                (err) => res.status(401).send(err),
             );
     });
 
-    /* Middleware */
-
-    function isAuthenticated(req: express.Request, res: express.Response, next: express.NextFunction) {
-        if (!req.session || !req.session.passport) {
-            res.status(401).send({ success: false, message: 'User not authenticated' });
-        } else {
-            next();
-        }
-    }
+    router.get('/user/messages', (req, res) => {
+        res.send(messages);
+    });
 
     return router;
 };
+
+export { messages };

@@ -10,48 +10,43 @@ const ip = 'localhost';
 const database = 'be-project';
 const connectionString = `mongodb://${ip}/${database}`;
 
+const timeout = 5000;
 let connected = false;
 
-function connect(maxTries = 10, timeout = 5000): void {
-    let n = 0;
-    reconnect();
-    function reconnect(): void {
-        connected = false;
-        mongoose.connect(connectionString, <mongoose.ConnectionOptions>{ useMongoClient: true })
-            .then(() => {
-                connected = true;
-                console.log(chalk.green('Connected to database. \n'));
-            }, (err: any) => {
-                console.log(chalk.red(`\n${err}\n`));
-                if (++n <= maxTries || maxTries < 0) {
-                    console.log(chalk.blue(`Attempting to reconnect in ` +
-                        `${timeout}ms ${maxTries > 0 ? `[${n}/${maxTries}]\n` : ''}`));
-                    setTimeout(() => reconnect(), timeout);
-                }
-            });
-    }
+function connect(wait = timeout): void {
+    setTimeout(
+        () => {
+            mongoose.connect(connectionString, <mongoose.ConnectionOptions> { useMongoClient: true })
+                .then(() => {
+                    console.log(chalk.green('Connected to database. \n'));
+                }, (err: any) => {
+                    console.log(chalk.red(`\n${err}\n`));
+                    console.log(chalk.blue(`Attempting to reconnect in ${timeout}ms \n`));
+                });
+        },
+        wait,
+    );
 }
-mongoose.connection.on( 'disconnected', () => {
-    if (connected) {
-        connected = false;
-        console.log(chalk.red('Disconnected from database'));
-        connect(-1);
-    }
-} );
-mongoose.connection.on( 'connected', () => {
+
+mongoose.connection.on('disconnected', () => {
+    console.log(chalk.red('Disconnected from database'));
+    connected = false;
+    connect();
+});
+
+mongoose.connection.on('connected', () => {
     connected = true;
-} );
+});
 
 function downProtector(req: express.Request, res: express.Response, next: express.NextFunction): void {
-    console.log(connected);
     if (connected) {
         return next();
     }
-    res.status(500).send(`<h1>Internal server error</h1>`);
+    res.sendStatus(500);
 }
 
 export default {
     mongoose,
-    connect,
+    connect: connect.bind(null, 0),
     downProtector,
 };

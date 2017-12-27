@@ -22,7 +22,7 @@ import userRouter from './src/routers/user-router';
 
 const MongoStore = connect_mongo(session);
 const server = express();
-db.connect(20);
+db.connect();
 
 server.use(session({
     secret: config.sessionSecret,
