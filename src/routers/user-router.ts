@@ -2,8 +2,10 @@
 import * as express from 'express';
 import * as passport from 'passport';
 
-import { getErr, isAuthenticated } from '../common';
+import IMessage from '../models/message';
+import IResponse from '../models/response';
 import User from '../models/user';
+import {getErr, isAuthenticated, reqRequire} from './common';
 
 /* --- User API ---
 * -METHOD-         -URL-                                            -MIDDLEWARE-
@@ -20,13 +22,7 @@ import User from '../models/user';
 * message: String  - If failed provides description of the error
 */
 
-interface IMessage {
-    success: boolean;
-    message?: string;
-    code?: number;
-}
-
-const messages = {
+const messages: IMessage = {
     success: {
         success: true,
     },
@@ -68,12 +64,12 @@ const messages = {
         message: 'Invalid token',
         code: 6,
     },
-    isNotValidEmail(email: string) {
+    isNotValidEmail(email: string): IResponse {
         return {
-        success: false,
-        message: `${email} is not valid e-mail address`,
-        code: 7,
-        };
+            success: false,
+            message: `${email} is not valid e-mail address`,
+            code: 7,
+        } as IResponse;
     },
     invalidOldPassword: {
         success: false,
@@ -87,7 +83,7 @@ const messages = {
     },
 };
 
-export default (passportInstance: passport.PassportStatic): express.Router => {
+function create(passportInstance: passport.PassportStatic): express.Router {
     const router: express.Router = express.Router();
 
     router.post('/login', passportInstance.authenticate('local'), (req, res) => {
@@ -98,30 +94,24 @@ export default (passportInstance: passport.PassportStatic): express.Router => {
         if (!req.session) {
             return res.status(401).send(messages.userNotAuthenticated);
         }
-        req.logout();
-        req.session.destroy((err) => {
+        // req.logout();
+        req.session.destroy((err: any) => {
             if (err) {
                 console.log(`Session destroy error: ${err}`);
                 res.status(500).send(messages.internalError);
             }
+            res.status(200).send(messages.success);
         });
-        res.status(200).send(messages.success);
     });
 
     router.get('/user', isAuthenticated, (req, res) => {
-        if (!req.session) {
-            return res.status(401).send(messages.userNotAuthenticated);
-        }
-        getErr(User.findById(req.session.passport.user).exec())
+        getErr(User.m.findById((<any> req.session).passport.user).exec())
             .then((user) => res.send(user),
                 () => res.status(404).send(messages.userNotFound),
             );
     });
 
-    router.post('/user', (req, res) => {
-        if (!req.body.email || !req.body.password) {
-            res.status(400).send(messages.invalidEmailAndOrPassword);
-        }
+    router.post('/user', reqRequire.body([ 'email', 'password' ]), (req, res) => {
         const user = new User();
         getErr(user.add(req.body.email, req.body.password))
             .then(() => res.status(201).send(messages.success),
@@ -144,18 +134,18 @@ export default (passportInstance: passport.PassportStatic): express.Router => {
     });
 
     router.post('/user/change-password', isAuthenticated, (req, res) => {
-        if (!req.body.oldPassword || !req.body.newPassword ) {
+        if (!req.body.oldPassword || !req.body.newPassword) {
             res.status(400).send(messages.invalidOldAndOrNewPassword);
         }
         if (!req.session) {
             return void res.status(400).send(messages.userNotAuthenticated);
         }
-        getErr(User.findById(req.session.passport.user).exec()
-            .then((user) => {
-                if (!user) {
+        getErr(User.m.findById(req.session.passport.user).exec()
+            .then((userInstance) => {
+                if (!userInstance) {
                     return Promise.reject(messages.userNotFound);
                 }
-                return user.changePassword(req.body.oldPassword, req.body.newPassword);
+                return new User(userInstance).changePassword(req.body.oldPassword, req.body.newPassword);
             }))
             .then(() => res.status(200).send(messages.success),
                 (err) => res.status(401).send(err),
@@ -164,9 +154,9 @@ export default (passportInstance: passport.PassportStatic): express.Router => {
 
     router.get('/user/reset-password/:email', (req, res) => {
         getErr(User.generateResetPasswordRequest(req.params.email))
-           .then(() => res.status(200).send(messages.success),
-               (err) => res.status(401).send(err),
-           );
+            .then(() => res.status(200).send(messages.success),
+                (err) => res.status(401).send(err),
+            );
     });
 
     router.post('/user/reset-password', (req, res) => {
@@ -184,6 +174,9 @@ export default (passportInstance: passport.PassportStatic): express.Router => {
     });
 
     return router;
-};
+}
 
-export { messages };
+export {
+    create as default,
+    messages,
+};

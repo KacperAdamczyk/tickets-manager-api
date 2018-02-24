@@ -1,12 +1,12 @@
 import * as express from 'express';
-import * as path from "path";
+import * as path from 'path';
 
 const indexUrl = '../../dist/index.html';
 
-const router: express.Router = express.Router();
+const router = express.Router();
 
-router.get('*', (req: express.Request, res: express.Response) => {
+router.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, indexUrl));
 });
 
-export default  router;
+export default router;
