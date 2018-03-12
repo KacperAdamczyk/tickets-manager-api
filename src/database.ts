@@ -3,6 +3,7 @@ import * as express from 'express';
 import * as mongoose from 'mongoose';
 
 import config from '../src/config';
+import {serverLog} from './routers/common';
 
 /* Setting mongoose Promise to ES6 Promise */
 (<any> mongoose).Promise = global.Promise;
@@ -10,17 +11,17 @@ import config from '../src/config';
 let connected = false;
 
 function connect(): Promise<any> {
-    return mongoose.connect(config.connectionString)
+    return mongoose.connect(config.DatabaseConfig.connectionString)
         .then(() => {
-            console.log(chalk.green('Connected to database. \n'));
+            serverLog(chalk.green('Connected to database. \n'));
         }, (err: any) => {
-            console.log(chalk.red(`\n${err}\n`));
+            serverLog(chalk.red(`\n${err}\n`));
             // return Promise.reject(null);
         });
 }
 
 mongoose.connection.on('disconnected', () => {
-    console.log(chalk.red('Disconnected from database'));
+    serverLog(chalk.red('Disconnected from database'));
     connected = false;
 });
 

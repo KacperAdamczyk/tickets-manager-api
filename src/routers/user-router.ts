@@ -1,9 +1,9 @@
 import * as express from 'express';
 import * as passport from 'passport';
 
-import {userMessages} from '../messages';
+import {generalMessages, userMessages} from '../messages';
 import User from '../models/user';
-import {getErr, IReqWithSession, isAuthenticated, reqRequire} from './common';
+import {getErr, IReqWithSession, isAuthenticated, reqRequire, serverLog} from './common';
 
 /* --- User API ---
 * -METHOD-         -URL-                                            -MIDDLEWARE-
@@ -23,7 +23,7 @@ function create(passportInstance: passport.PassportStatic): express.Router {
     router.post('/login',
         passportInstance.authenticate('local'),
         (req, res) => {
-        res.status(200).send(userMessages.success);
+        res.status(200).send(generalMessages.success);
     });
 
     router.get('/logout',
@@ -32,10 +32,10 @@ function create(passportInstance: passport.PassportStatic): express.Router {
         req.logout();
         (<IReqWithSession> req).session.destroy((err: any) => {
             if (err) {
-                console.log(`Session destroy error: ${err}`);
-                res.status(500).send(userMessages.internalError);
+                serverLog(`Session destroy error: ${err}`);
+                res.status(500).send(generalMessages.internalError);
             }
-            res.status(200).send(userMessages.success);
+            res.status(200).send(generalMessages.success);
         });
     });
 
@@ -53,7 +53,7 @@ function create(passportInstance: passport.PassportStatic): express.Router {
         (req, res) => {
         const user = new User();
         getErr(user.add(req.body.email, req.body.password))
-            .then(() => res.status(201).send(userMessages.success),
+            .then(() => res.status(201).send(generalMessages.success),
                 (err) => res.status(400).send(err),
             );
     });
@@ -61,7 +61,7 @@ function create(passportInstance: passport.PassportStatic): express.Router {
     router.get('/user/activate/:token',
         (req, res) => {
         getErr(User.activateUser(req.params.token))
-            .then(() => res.status(200).send(userMessages.success),
+            .then(() => res.status(200).send(generalMessages.success),
                 (err) => res.status(401).send(err),
             );
     });
@@ -69,7 +69,7 @@ function create(passportInstance: passport.PassportStatic): express.Router {
     router.get('/user/reactivate/:email',
         (req, res) => {
         getErr(User.generateActivationRequest(req.params.email))
-            .then(() => res.status(200).send(userMessages.success),
+            .then(() => res.status(200).send(generalMessages.success),
                 (err) => res.status(401).send(err),
             );
     });
@@ -86,7 +86,7 @@ function create(passportInstance: passport.PassportStatic): express.Router {
                 }
                 return new User(userInstance).changePassword(req.body.oldPassword, req.body.newPassword);
             }))
-            .then(() => res.status(200).send(userMessages.success),
+            .then(() => res.status(200).send(generalMessages.success),
                 (err) => res.status(401).send(err),
             );
     });
@@ -94,7 +94,7 @@ function create(passportInstance: passport.PassportStatic): express.Router {
     router.get('/user/reset-password/:email',
         (req, res) => {
         getErr(User.generateResetPasswordRequest(req.params.email))
-            .then(() => res.status(200).send(userMessages.success),
+            .then(() => res.status(200).send(generalMessages.success),
                 (err) => res.status(401).send(err),
             );
     });
@@ -103,7 +103,7 @@ function create(passportInstance: passport.PassportStatic): express.Router {
         reqRequire.body(['token', 'newPassword']),
         (req, res) => {
         getErr(User.resetPassword(req.body.token, req.body.newPassword))
-            .then(() => res.status(200).send(userMessages.success),
+            .then(() => res.status(200).send(generalMessages.success),
                 (err) => res.status(401).send(err),
             );
     });

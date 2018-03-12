@@ -5,17 +5,17 @@ function isRunningTest() {
 }
 
 class DatabaseConfig {
-    public ip = 'localhost';
-    public database = 'be-project';
-    public connectionString = `mongodb://${this.ip}/${this.database}`;
+    public static ip = 'localhost';
+    public static database = 'be-project';
+    public static  connectionString = `mongodb://${DatabaseConfig.ip}/${DatabaseConfig.database}`;
 }
 
 // noinspection TsLint
 class ServerConfig {
-    public port = 8080; // 8443
-    public url = `http://localhost:${this.port}`;
-    public sessionSecret = 'be-project-Kacper-Adamczyk-session';
-    public tokenSecret = 'be-project-Kacper-Adamczyk-token';
+    public static port = 8080; // 8443
+    public static url = `http://localhost:${ServerConfig.port}`;
+    public static sessionSecret = 'be-project-Kacper-Adamczyk-session';
+    public static tokenSecret = 'be-project-Kacper-Adamczyk-token';
 }
 
 // const sslOptions = {
@@ -24,7 +24,7 @@ class ServerConfig {
 // };
 
 export default {
-    ...new DatabaseConfig(),
-    ...new ServerConfig(),
+    DatabaseConfig,
+    ServerConfig,
     isRunningTest
 };

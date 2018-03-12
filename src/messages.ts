@@ -1,7 +1,6 @@
-import IMessage from './models/message';
 import IResponse from './models/response';
 
-const generalMessages: IMessage = {
+const generalMessages = {
     success: {
         success: true,
     },
@@ -15,7 +14,7 @@ const generalMessages: IMessage = {
     },
 };
 
-const userMessages: IMessage = {
+const userMessages = {
     userNotAuthenticated: {
         success: false,
         message: 'User not authenticated',

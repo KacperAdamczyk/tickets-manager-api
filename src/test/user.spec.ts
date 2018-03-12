@@ -1,9 +1,9 @@
 import * as chai from 'chai';
 import 'mocha';
 import {Mockgoose} from 'mockgoose';
-import {userMessages} from '../messages';
 
-import server, {db, serverInstance, startServer} from '../../server';
+import server, {db, startServer} from '../../server';
+import {userMessages} from '../messages';
 
 process.env.NODE_ENV = 'test';
 
@@ -21,38 +21,32 @@ const newUser = {
 const expect = chai.expect;
 
 describe('User API', () => {
-    before((done) => {
-        mockgoose.prepareStorage().then(() => {
-            db.connect().then(() => {
-                startServer();
-                done();
-            });
-        });
+    before(async () => {
+        await mockgoose.prepareStorage();
+        await db.connect();
+        startServer();
+    });
+
+    beforeEach(async () => {
+        await mockgoose.helper.reset();
     });
 
     after((done) => {
-        serverInstance.close();
         done();
     });
 
-    it('should create new user', (done) => {
-        chai.request(server)
-            .post('/user')
-            .send(newUser)
-            .then(res => {
-                expect(res).to.have.status(201);
-                done();
-            });
+    it('should create new user', async () => {
+        const res = await chai.request(server).post('/user').send(newUser);
+        expect(res).to.have.status(201);
     });
 
-    it('should not create user with taken email', (done) => {
-        chai.request(server)
-            .post('/user')
-            .send(newUser)
-            .catch(res => {
-                expect(res).to.have.status(400);
-                expect(res.response.body).to.be.eql(userMessages.emailAlreadyTaken);
-                done();
-            });
+    it('should not create user with taken email', async () => {
+        await chai.request(server).post('/user').send(newUser);
+        try {
+            await chai.request(server).post('/user').send(newUser);
+        } catch (err) {
+            expect(err).to.have.status(400);
+            expect(err.response.body).to.be.eql(userMessages.emailAlreadyTaken);
+        }
     });
 });

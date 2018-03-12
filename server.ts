@@ -13,6 +13,7 @@ import * as http from 'http';
 import config from './src/config';
 import db from './src/database';
 import passport from './src/passport';
+import {serverLog} from './src/routers/common';
 import router from './src/routers/router';
 import userRouter from './src/routers/user-router';
 
@@ -27,10 +28,11 @@ const server = express();
 let serverInstance: http.Server;
 
 function startServer() {
+    /* Middleware */
     server.use(session({
         resave: true,
         saveUninitialized: false,
-        secret: config.sessionSecret,
+        secret: config.ServerConfig.sessionSecret,
         store: new MongoStore({mongooseConnection: db.mongoose.connection}),
     }));
     server.use(express.static(path.join(__dirname, 'dist')));
@@ -49,9 +51,9 @@ function startServer() {
     server.use(router);
 
     /* Starting */
-    console.log(chalk.green('\nStarting the server... \n'));
-    serverInstance = server.listen(config.port, () =>
-        console.log(chalk.green(`Server started on port ${config.port}! \n`)));
+    serverLog(chalk.green('\nStarting the server... \n'));
+    serverInstance = server.listen(config.ServerConfig.port, () =>
+        serverLog(chalk.green(`Server started on port ${config.ServerConfig.port}! \n`)));
 // https.createServer(sslOptions, server).listen(port);
 }
 

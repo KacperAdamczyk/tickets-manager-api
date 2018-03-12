@@ -1,11 +1,19 @@
 import chalk from 'chalk';
 import * as express from 'express';
 
+import config from '../config';
 import {generalMessages, userMessages} from '../messages';
+
+function serverLog(...args: string[]) {
+    if (!config.isRunningTest()) {
+        // noinspection TsLint
+        console.log(...args);
+    }
+}
 
 function getErr(pr: Promise<any>): Promise<any> {
     return pr.catch((err) => {
-        console.log(chalk.red(JSON.stringify(err)));
+        serverLog(chalk.red(JSON.stringify(err)));
         return Promise.reject(err.success !== undefined ? err : generalMessages.internalError);
     });
 }
@@ -53,6 +61,7 @@ interface IReqWithSession extends express.Request {
 }
 
 export {
+    serverLog,
     getErr,
     isAuthenticated,
     reqRequire,

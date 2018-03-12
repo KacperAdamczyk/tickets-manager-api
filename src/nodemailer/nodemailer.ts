@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import * as nodemailer from 'nodemailer';
+import {serverLog} from '../routers/common';
 
 const transporter: Promise<any> = new Promise((resolve, reject) => {
     nodemailer.createTestAccount((err, account: nodemailer.TestAccount) => {
@@ -30,10 +31,10 @@ export function sendActivation(to: string, link: string) {
     transporter.then((transporterInstance: nodemailer.Transport) => {
         (<any> transporterInstance).sendMail(<any> mailOptions, (error: any, info: nodemailer.SentMessageInfo) => {
             if (error) {
-                return console.log(error);
+                return serverLog(error);
             }
-            console.log(chalk.blue('Activation message sent: ', info.messageId));
-            console.log(chalk.blue('Preview URL: ', <string> nodemailer.getTestMessageUrl(info)));
+            serverLog(chalk.blue('Activation message sent: ', info.messageId));
+            serverLog(chalk.blue('Preview URL: ', <string> nodemailer.getTestMessageUrl(info)));
         });
-    }, (err) => console.log(chalk.red(err)));
+    }, (err) => serverLog(chalk.red(err)));
 }

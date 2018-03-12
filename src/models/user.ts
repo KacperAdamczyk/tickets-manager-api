@@ -7,6 +7,7 @@ import {Document, model, Schema} from 'mongoose';
 import config from '../config';
 import {userMessages} from '../messages';
 import * as mail from '../nodemailer/nodemailer';
+import {serverLog} from '../routers/common';
 import IResponse from './response';
 
 enum tokenPurposes {
@@ -70,7 +71,7 @@ class User {
     }
 
     public static async activateUser(token: string): Promise<void | string> {
-        const payload: IPayload = <IPayload> jwt.verify(token, config.tokenSecret);
+        const payload: IPayload = <IPayload> jwt.verify(token, config.ServerConfig.tokenSecret);
         const user = await this.m.findById(payload.id).exec();
         if (!user ||
             !user.tokens ||
@@ -92,7 +93,8 @@ class User {
         }
         userInstance.tokens.activationToken = new User(userInstance).generateActivationToken();
         await userInstance.save();
-        mail.sendActivation(userInstance.email, `${config.url}/user/activate/${userInstance.tokens.activationToken}`);
+        mail.sendActivation(userInstance.email,
+            `${config.ServerConfig.url}/user/activate/${userInstance.tokens.activationToken}`);
     }
 
     public static async generateResetPasswordRequest(email: string) {
@@ -105,7 +107,7 @@ class User {
     }
 
     public static async resetPassword(token: string, newPassword: string) {
-        const payload: IPayload = <IPayload> jwt.verify(token, config.tokenSecret);
+        const payload: IPayload = <IPayload> jwt.verify(token, config.ServerConfig.tokenSecret);
         const userInstance = await this.m.findById(payload.id).exec();
         if (!userInstance ||
             payload.purpose !== tokenPurposes.passwordReset ||
@@ -151,10 +153,10 @@ class User {
         }
         this.i.email = email;
         this.i.password = User.hashPassword(password);
-        console.log(chalk.blue(`Attempting to create new user: ${this.i.email}`));
+        serverLog(chalk.blue(`Attempting to create new user: ${this.i.email}`));
         this.i.tokens.activationToken = this.generateActivationToken();
         await this.i.save();
-        mail.sendActivation(this.i.email, `${config.url}/user/activate/${this.i.tokens.activationToken}`);
+        mail.sendActivation(this.i.email, `${config.ServerConfig.url}/user/activate/${this.i.tokens.activationToken}`);
     }
 
     public async changePassword(oldPassword: string, newPassword: string) {
@@ -166,12 +168,12 @@ class User {
     }
 
     private generateActivationToken(): string {
-        return jwt.sign({id: this.i.id, purpose: tokenPurposes.userActivation}, config.tokenSecret,
+        return jwt.sign({id: this.i.id, purpose: tokenPurposes.userActivation}, config.ServerConfig.tokenSecret,
             {expiresIn: '1d'});
     }
 
     private generateResetToken(): string {
-        return jwt.sign({id: this.i.id, purpose: tokenPurposes.passwordReset}, config.tokenSecret,
+        return jwt.sign({id: this.i.id, purpose: tokenPurposes.passwordReset}, config.ServerConfig.tokenSecret,
             {expiresIn: '1h'});
     }
 }
