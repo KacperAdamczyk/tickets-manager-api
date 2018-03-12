@@ -1,8 +1,6 @@
-'use strict';
-/* Imports */
 import * as bodyParser from 'body-parser';
 import chalk from 'chalk';
-import * as connect_mongo from 'connect-mongo';
+import * as connectMongo from 'connect-mongo';
 import * as cookieParser from 'cookie-parser';
 import * as cors from 'cors';
 import * as express from 'express';
@@ -11,41 +9,57 @@ import * as helmet from 'helmet';
 import * as morgan from 'morgan';
 import * as path from 'path';
 
-/* Local imports */
+import * as http from 'http';
 import config from './src/config';
 import db from './src/database';
 import passport from './src/passport';
+import {serverLog} from './src/routers/common';
 import router from './src/routers/router';
 import userRouter from './src/routers/user-router';
 
 /* Configuration */
+const MongoStore = connectMongo(session);
 
-const MongoStore = connect_mongo(session);
+if (!config.isRunningTest()) {
+    db.connect().then(startServer, () => process.abort());
+}
+
 const server = express();
-db.connect();
+let serverInstance: http.Server;
 
-server.use(session({
-    secret: config.sessionSecret,
-    resave: true,
-    saveUninitialized: false,
-    store: new MongoStore({ mongooseConnection: db.mongoose.connection }),
-}));
-server.use(express.static(path.join(__dirname, 'dist')));
-server.use(helmet());
-server.use(cors());
-server.use(cookieParser());
-server.use(bodyParser.urlencoded({ extended: false }));
-server.use(bodyParser.json());
-server.use(passport.initialize());
-server.use(passport.session());
+function startServer() {
+    /* Middleware */
+    server.use(session({
+        resave: true,
+        saveUninitialized: false,
+        secret: config.ServerConfig.sessionSecret,
+        store: new MongoStore({mongooseConnection: db.mongoose.connection}),
+    }));
+    server.use(express.static(path.join(__dirname, 'dist')));
+    server.use(helmet());
+    server.use(cors());
+    server.use(cookieParser());
+    server.use(bodyParser.urlencoded({extended: true}));
+    server.use(bodyParser.json());
+    server.use(passport.initialize());
+    server.use(passport.session());
 
-server.use(morgan('dev'));
+    server.use(morgan('dev'));
 
-server.use(db.downProtector);
-server.use(userRouter(passport));
-server.use(router);
+    server.use(db.downProtector);
+    server.use(userRouter(passport));
+    server.use(router);
 
-/* Starting */
-console.log(chalk.green('\nStarting the server... \n'));
-server.listen(config.port, () => console.log(chalk.green(`Server started on port ${config.port}! \n`)));
+    /* Starting */
+    serverLog(chalk.green('\nStarting the server... \n'));
+    serverInstance = server.listen(config.ServerConfig.port, () =>
+        serverLog(chalk.green(`Server started on port ${config.ServerConfig.port}! \n`)));
 // https.createServer(sslOptions, server).listen(port);
+}
+
+export {
+    server as default,
+    serverInstance,
+    startServer,
+    db
+};

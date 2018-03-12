@@ -2,13 +2,13 @@ import * as bcrypt from 'bcryptjs';
 import chalk from 'chalk';
 import * as emailValidator from 'email-validator';
 import * as jwt from 'jsonwebtoken';
-import { instanceMethod, InstanceType, ModelType, prop, staticMethod, Typegoose } from 'typegoose';
-import db from '../database';
-import { messages } from '../routers/user-router';
-
-import * as mail from '../nodemailer/nodemailer';
+import {Document, model, Schema} from 'mongoose';
 
 import config from '../config';
+import {userMessages} from '../messages';
+import * as mail from '../nodemailer/nodemailer';
+import {serverLog} from '../routers/common';
+import IResponse from './response';
 
 enum tokenPurposes {
     userActivation = 'user-activation',
@@ -20,138 +20,162 @@ interface IPayload {
     purpose: tokenPurposes;
 }
 
-// noinspection TsLint
-class Tokens {
-    @prop()
-    public activationToken?: string;
-    @prop()
-    public resetToken?: string;
+const userSchema = new Schema({
+    email: {
+        type: String,
+        require: true,
+        unique: true
+    },
+    password: {
+        type: String,
+        require: true
+    },
+    tokens: {
+        activationToken: String,
+        resetToken: String
+    },
+    admin: {
+        type: Boolean,
+        default: false
+    },
+    details: {
+        firstName: String,
+        lastName: String,
+    }
+});
+
+interface IUserSchema extends Document {
+    email: string;
+    password: string;
+    tokens: {
+        activationToken?: string,
+        resetToken?: string
+    };
+    admin?: boolean;
+    details?: {
+        firstName?: string,
+        lastName?: string,
+    };
+    activateUser: (token: string) => Promise<void | string>;
 }
 
-// noinspection TsLint
-class Details {
-    @prop()
-    public firstName: string;
-    @prop()
-    public lastName: string;
-}
+const UserModel = model<IUserSchema>('User', userSchema);
 
-// noinspection TsLint
-class User extends Typegoose {
-    @staticMethod
-    public static async activateUser(this: ModelType<User>, token: string): Promise<void | string> {
-        const payload: IPayload = <IPayload> jwt.verify(token, config.tokenSecret);
-        const user = await this.findById(payload.id).exec();
+class User {
+    public static get m() {
+        return this.model;
+    }
+
+    public get i() {
+        return this.instance;
+    }
+
+    public static async activateUser(token: string): Promise<void | string> {
+        const payload: IPayload = <IPayload> jwt.verify(token, config.ServerConfig.tokenSecret);
+        const user = await this.m.findById(payload.id).exec();
         if (!user ||
-            payload.purpose !== tokenPurposes.userActivation ||
-            user.tokens.activationToken !== token) {
-            return Promise.reject(messages.invalidToken);
+            !user.tokens ||
+            user.tokens.activationToken !== token ||
+            payload.purpose !== tokenPurposes.userActivation) {
+            return Promise.reject(userMessages.invalidToken);
         }
         user.tokens.activationToken = undefined;
         await user.save();
     }
 
-    @staticMethod
-    public static async generateActivationRequest(this: ModelType<User>, email: string) {
-        const user = await this.findOne({ email }).exec();
-        if (!user) {
-            return Promise.reject(messages.userNotFound);
+    public static async generateActivationRequest(email: string) {
+        const userInstance = await this.m.findOne({email}).exec();
+        if (!userInstance) {
+            return Promise.reject(userMessages.userNotFound);
         }
-        if (!user.tokens.activationToken) {
-            return Promise.reject(messages.alreadyActivated);
+        if (!userInstance.tokens.activationToken) {
+            return Promise.reject(userMessages.alreadyActivated);
         }
-        user.tokens.activationToken = user.generateActivationToken();
-        await user.save();
-        mail.sendActivation(user.email, `${config.url}/user/activate/${user.tokens.activationToken}`);
+        userInstance.tokens.activationToken = new User(userInstance).generateActivationToken();
+        await userInstance.save();
+        mail.sendActivation(userInstance.email,
+            `${config.ServerConfig.url}/user/activate/${userInstance.tokens.activationToken}`);
     }
 
-    @staticMethod
-    public static async generateResetPasswordRequest(this: ModelType<User>, email: string) {
-        const user = await this.findOne({ email }).exec();
-        if (!user) {
-            return Promise.reject(messages.userNotFound);
+    public static async generateResetPasswordRequest(email: string) {
+        const userInstance = await this.m.findOne({email}).exec();
+        if (!userInstance) {
+            return Promise.reject(userMessages.userNotFound);
         }
-        user.tokens.resetToken = user.generateResetToken();
-        await user.save();
+        userInstance.tokens.resetToken = new User(userInstance).generateResetToken();
+        await userInstance.save();
     }
 
-    @staticMethod
-    public static async resetPassword(this: ModelType<User>, token: string, newPassword: string) {
-        const payload: IPayload = <IPayload> jwt.verify(token, config.tokenSecret);
-        const user = await this.findById(payload.id).exec();
-        if (!user ||
+    public static async resetPassword(token: string, newPassword: string) {
+        const payload: IPayload = <IPayload> jwt.verify(token, config.ServerConfig.tokenSecret);
+        const userInstance = await this.m.findById(payload.id).exec();
+        if (!userInstance ||
             payload.purpose !== tokenPurposes.passwordReset ||
-            user.tokens.resetToken !== token) {
-            return Promise.reject(messages.invalidToken);
+            userInstance.tokens.resetToken !== token) {
+            return Promise.reject(userMessages.invalidToken);
         }
-        user.password = User.hashPassword(newPassword);
-        user.tokens.resetToken = undefined;
-        await user.save();
+        userInstance.password = User.hashPassword(newPassword);
+        userInstance.tokens.resetToken = undefined;
+        await userInstance.save();
     }
 
-    @staticMethod
+    private static model = UserModel;
+
     private static hashPassword(password: string): string {
         return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
     }
 
-    @prop()
-    public readonly tokens: Tokens;
-    @prop({ unique: true, required: true })
-    private email: string;
-    @prop()
-    private password: string;
-    @prop({ default: false })
-    private admin: boolean;
-    @prop()
-    private details: Details;
-
-    @instanceMethod
-    public async add(this: InstanceType<User>, email: string, password: string) {
-        if (!this.validateEmail(email)) {
-            Promise.reject(messages.isNotValidEmail(email));
-        }
-        this.email = email;
-        this.password = User.hashPassword(password);
-        console.log(chalk.blue(`Attempting to create new user: ${this.email}`));
-        this.tokens.activationToken = this.generateActivationToken();
-        await this.save();
-        mail.sendActivation(this.email, `${config.url}/user/activate/${this.tokens.activationToken}`);
-    }
-
-    @instanceMethod
-    public async changePassword(this: InstanceType<User>, oldPassowrd: string, newPassword: string) {
-            if (!this.validatePassword(oldPassowrd)) {
-                return Promise.reject(messages.invalidOldPassword);
-            }
-            this.password = User.hashPassword(newPassword);
-            await this.save();
-    }
-
-    @instanceMethod
-    public validatePassword(password: string): boolean {
-        return bcrypt.compareSync(password, this.password);
-    }
-
-    @instanceMethod
-    private validateEmail(email: string) {
+    private static validateEmail(email: string): boolean {
         return emailValidator.validate(email);
     }
 
-    @instanceMethod
-    private generateActivationToken(this: InstanceType<User>): string {
-        return jwt.sign({ id: this.id, purpose: tokenPurposes.userActivation }, config.tokenSecret,
-            { expiresIn: '1d' });
+    private static async isEmailTaken(email: string): Promise<boolean> {
+        const userInstance = await User.m.findOne({email}).exec();
+        return !!userInstance;
     }
 
-    @instanceMethod
-    private generateResetToken(this: InstanceType<User>): string {
-        return jwt.sign({ id: this.id, purpose: tokenPurposes.passwordReset }, config.tokenSecret,
-            { expiresIn: '1h' });
+    private instance: IUserSchema;
+
+    constructor(instance = new UserModel()) {
+        this.instance = instance;
+    }
+
+    public validatePassword(password: string): boolean {
+        return bcrypt.compareSync(password, this.i.password);
+    }
+
+    public async add(email: string, password: string) {
+        if (!User.validateEmail(email)) {
+            return Promise.reject((<(val: string) => IResponse> userMessages.isNotValidEmail)(email));
+        }
+        if (await User.isEmailTaken(email)) {
+            return Promise.reject(userMessages.emailAlreadyTaken);
+        }
+        this.i.email = email;
+        this.i.password = User.hashPassword(password);
+        serverLog(chalk.blue(`Attempting to create new user: ${this.i.email}`));
+        this.i.tokens.activationToken = this.generateActivationToken();
+        await this.i.save();
+        mail.sendActivation(this.i.email, `${config.ServerConfig.url}/user/activate/${this.i.tokens.activationToken}`);
+    }
+
+    public async changePassword(oldPassword: string, newPassword: string) {
+        if (!this.validatePassword(oldPassword)) {
+            return Promise.reject(userMessages.invalidOldPassword);
+        }
+        this.i.password = User.hashPassword(newPassword);
+        await this.i.save();
+    }
+
+    private generateActivationToken(): string {
+        return jwt.sign({id: this.i.id, purpose: tokenPurposes.userActivation}, config.ServerConfig.tokenSecret,
+            {expiresIn: '1d'});
+    }
+
+    private generateResetToken(): string {
+        return jwt.sign({id: this.i.id, purpose: tokenPurposes.passwordReset}, config.ServerConfig.tokenSecret,
+            {expiresIn: '1h'});
     }
 }
 
-export default new User().getModelForClass(User,
-    { existingMongoose: db.mongoose,
-        existingConnection: db.mongoose.connection,
-        // schemaOptions: { collection: 'users' }
-    });
+export default User;
