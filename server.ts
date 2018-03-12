@@ -1,4 +1,3 @@
-/* Imports */
 import * as bodyParser from 'body-parser';
 import chalk from 'chalk';
 import * as connectMongo from 'connect-mongo';
@@ -9,7 +8,8 @@ import * as session from 'express-session';
 import * as helmet from 'helmet';
 import * as morgan from 'morgan';
 import * as path from 'path';
-/* Local imports */
+
+import * as http from 'http';
 import config from './src/config';
 import db from './src/database';
 import passport from './src/passport';
@@ -24,6 +24,7 @@ if (!config.isRunningTest()) {
 }
 
 const server = express();
+let serverInstance: http.Server;
 
 function startServer() {
     server.use(session({
@@ -49,12 +50,14 @@ function startServer() {
 
     /* Starting */
     console.log(chalk.green('\nStarting the server... \n'));
-    server.listen(config.port, () => console.log(chalk.green(`Server started on port ${config.port}! \n`)));
+    serverInstance = server.listen(config.port, () =>
+        console.log(chalk.green(`Server started on port ${config.port}! \n`)));
 // https.createServer(sslOptions, server).listen(port);
 }
 
 export {
     server as default,
+    serverInstance,
     startServer,
     db
 };

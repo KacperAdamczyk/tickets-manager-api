@@ -1,10 +1,11 @@
-process.env.NODE_ENV = 'test';
-
 import * as chai from 'chai';
 import 'mocha';
 import {Mockgoose} from 'mockgoose';
+import {userMessages} from '../messages';
 
-import server, {db, startServer} from '../../server';
+import server, {db, serverInstance, startServer} from '../../server';
+
+process.env.NODE_ENV = 'test';
 
 const mockgoose = new Mockgoose(db.mongoose);
 
@@ -29,12 +30,29 @@ describe('User API', () => {
         });
     });
 
-    it('should create new user', () => {
+    after((done) => {
+        serverInstance.close();
+        done();
+    });
+
+    it('should create new user', (done) => {
         chai.request(server)
             .post('/user')
             .send(newUser)
-            .then((res) => {
+            .then(res => {
                 expect(res).to.have.status(201);
+                done();
+            });
+    });
+
+    it('should not create user with taken email', (done) => {
+        chai.request(server)
+            .post('/user')
+            .send(newUser)
+            .catch(res => {
+                expect(res).to.have.status(400);
+                expect(res.response.body).to.be.eql(userMessages.emailAlreadyTaken);
+                done();
             });
     });
 });

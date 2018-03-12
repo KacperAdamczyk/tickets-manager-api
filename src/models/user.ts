@@ -5,8 +5,8 @@ import * as jwt from 'jsonwebtoken';
 import {Document, model, Schema} from 'mongoose';
 
 import config from '../config';
+import {userMessages} from '../messages';
 import * as mail from '../nodemailer/nodemailer';
-import {messages} from '../routers/user-router';
 import IResponse from './response';
 
 enum tokenPurposes {
@@ -22,7 +22,8 @@ interface IPayload {
 const userSchema = new Schema({
     email: {
         type: String,
-        require: true
+        require: true,
+        unique: true
     },
     password: {
         type: String,
@@ -63,6 +64,7 @@ class User {
     public static get m() {
         return this.model;
     }
+
     public get i() {
         return this.instance;
     }
@@ -74,7 +76,7 @@ class User {
             !user.tokens ||
             user.tokens.activationToken !== token ||
             payload.purpose !== tokenPurposes.userActivation) {
-            return Promise.reject(messages.invalidToken);
+            return Promise.reject(userMessages.invalidToken);
         }
         user.tokens.activationToken = undefined;
         await user.save();
@@ -83,10 +85,10 @@ class User {
     public static async generateActivationRequest(email: string) {
         const userInstance = await this.m.findOne({email}).exec();
         if (!userInstance) {
-            return Promise.reject(messages.userNotFound);
+            return Promise.reject(userMessages.userNotFound);
         }
         if (!userInstance.tokens.activationToken) {
-            return Promise.reject(messages.alreadyActivated);
+            return Promise.reject(userMessages.alreadyActivated);
         }
         userInstance.tokens.activationToken = new User(userInstance).generateActivationToken();
         await userInstance.save();
@@ -96,7 +98,7 @@ class User {
     public static async generateResetPasswordRequest(email: string) {
         const userInstance = await this.m.findOne({email}).exec();
         if (!userInstance) {
-            return Promise.reject(messages.userNotFound);
+            return Promise.reject(userMessages.userNotFound);
         }
         userInstance.tokens.resetToken = new User(userInstance).generateResetToken();
         await userInstance.save();
@@ -108,7 +110,7 @@ class User {
         if (!userInstance ||
             payload.purpose !== tokenPurposes.passwordReset ||
             userInstance.tokens.resetToken !== token) {
-            return Promise.reject(messages.invalidToken);
+            return Promise.reject(userMessages.invalidToken);
         }
         userInstance.password = User.hashPassword(newPassword);
         userInstance.tokens.resetToken = undefined;
@@ -117,12 +119,17 @@ class User {
 
     private static model = UserModel;
 
-    private static hashPassword(password: string) {
+    private static hashPassword(password: string): string {
         return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
     }
 
-    private static validateEmail(email: string) {
+    private static validateEmail(email: string): boolean {
         return emailValidator.validate(email);
+    }
+
+    private static async isEmailTaken(email: string): Promise<boolean> {
+        const userInstance = await User.m.findOne({email}).exec();
+        return !!userInstance;
     }
 
     private instance: IUserSchema;
@@ -137,7 +144,10 @@ class User {
 
     public async add(email: string, password: string) {
         if (!User.validateEmail(email)) {
-            return Promise.reject((<(val: string) => IResponse> messages.isNotValidEmail)(email));
+            return Promise.reject((<(val: string) => IResponse> userMessages.isNotValidEmail)(email));
+        }
+        if (await User.isEmailTaken(email)) {
+            return Promise.reject(userMessages.emailAlreadyTaken);
         }
         this.i.email = email;
         this.i.password = User.hashPassword(password);
@@ -147,9 +157,9 @@ class User {
         mail.sendActivation(this.i.email, `${config.url}/user/activate/${this.i.tokens.activationToken}`);
     }
 
-    public async changePassword(oldPassowrd: string, newPassword: string) {
-        if (!this.validatePassword(oldPassowrd)) {
-            return Promise.reject(messages.invalidOldPassword);
+    public async changePassword(oldPassword: string, newPassword: string) {
+        if (!this.validatePassword(oldPassword)) {
+            return Promise.reject(userMessages.invalidOldPassword);
         }
         this.i.password = User.hashPassword(newPassword);
         await this.i.save();
