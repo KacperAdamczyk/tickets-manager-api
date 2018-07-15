@@ -8,7 +8,6 @@ import config from '../config';
 import {userMessages} from '../messages';
 import * as mail from '../nodemailer/nodemailer';
 import {serverLog} from '../routers/common';
-import IResponse from './response';
 
 enum tokenPurposes {
     userActivation = 'user-activation',
@@ -146,7 +145,7 @@ class User {
 
     public async add(email: string, password: string) {
         if (!User.validateEmail(email)) {
-            return Promise.reject((<(val: string) => IResponse> userMessages.isNotValidEmail)(email));
+            return Promise.reject(userMessages.isNotValidEmail(email));
         }
         if (await User.isEmailTaken(email)) {
             return Promise.reject(userMessages.emailAlreadyTaken);
