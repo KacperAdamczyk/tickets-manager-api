@@ -1,5 +1,3 @@
-import IResponse from './models/response';
-
 const generalMessages = {
     success: {
         success: true,
@@ -45,12 +43,12 @@ const userMessages = {
         message: 'Invalid token',
         code: 6,
     },
-    isNotValidEmail(email: string): IResponse {
+    isNotValidEmail(email) {
         return {
             success: false,
             message: `${email} is not valid e-mail address`,
             code: 7,
-        } as IResponse;
+        };
     },
     invalidOldPassword: {
         success: false,

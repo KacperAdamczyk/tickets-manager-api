@@ -1,9 +1,9 @@
 import chalk from 'chalk';
 import * as nodemailer from 'nodemailer';
-import {serverLog} from '../routers/common';
+import { serverLog } from '../routers/common';
 
-const transporter: Promise<any> = new Promise((resolve, reject) => {
-    nodemailer.createTestAccount((err, account: nodemailer.TestAccount) => {
+const transporter = new Promise((resolve, reject) => {
+    nodemailer.createTestAccount((err, account) => {
         if (err) {
             return reject(err);
         }
@@ -20,7 +20,7 @@ const transporter: Promise<any> = new Promise((resolve, reject) => {
     });
 });
 
-export function sendActivation(to: string, link: string) {
+export function sendActivation(to, link) {
     const mailOptions = {
         from: '"BE Air" <no-replay@beair.com>',
         to,
@@ -28,13 +28,13 @@ export function sendActivation(to: string, link: string) {
         html: '<h3>Hello!</h3>' +
         `<a href="${link}">Click here</a>`,
     };
-    transporter.then((transporterInstance: nodemailer.Transport) => {
-        (<any> transporterInstance).sendMail(<any> mailOptions, (error: any, info: nodemailer.SentMessageInfo) => {
+    transporter.then((transporterInstance) => {
+        (transporterInstance).sendMail(mailOptions, (error, info) => {
             if (error) {
                 return serverLog(error);
             }
             serverLog(chalk.blue('Activation message sent: ', info.messageId));
-            serverLog(chalk.blue('Preview URL: ', <string> nodemailer.getTestMessageUrl(info)));
+            serverLog(chalk.blue('Preview URL: ', nodemailer.getTestMessageUrl(info)));
         });
     }, (err) => serverLog(chalk.red(err)));
 }
