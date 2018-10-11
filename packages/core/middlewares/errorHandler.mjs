@@ -1,4 +1,4 @@
-import { log } from '../log';
+import { log } from '../helpers/log';
 
 const normalizeErrorCode = code => code < 600 ? code : 404;
 

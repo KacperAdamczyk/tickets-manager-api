@@ -1,10 +1,9 @@
 import passport from 'passport';
 import localStrategy from 'passport-local';
+import { InternalError, log } from 'core';
 
 import { User } from '../modules/user/user.model';
-import { InternalError } from '../helpers/InternalError';
 import { userErrors } from '../modules/user/user.messages';
-import { log } from '../helpers/log';
 
 passport.serializeUser((user, done) => done(null, user._id));
 passport.deserializeUser((id, done) => User.findById(id)
@@ -12,9 +11,9 @@ passport.deserializeUser((id, done) => User.findById(id)
 
 passport.use(
     new localStrategy.Strategy({
-            usernameField: 'email',
-            passwordField: 'password',
-        },
+        usernameField: 'email',
+        passwordField: 'password',
+    },
         async (email, password, done) => {
             try {
                 const user = await User.findOne({ email });
