@@ -1,11 +1,10 @@
 import jwt from 'jsonwebtoken';
+import { InternalError, enhance } from 'core';
 
 import { User } from './user.model';
 import { userErrors, userMessages } from './user.messages';
 
 import { userToken } from '../../config/token';
-import { InternalError } from '../../helpers/InternalError';
-import { enhance } from '../../helpers/enhancers';
 
 const { TOKEN_SECRET } = process.env;
 

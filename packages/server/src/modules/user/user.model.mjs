@@ -2,12 +2,11 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import R from 'ramda';
+import { appendToSize, canGenerateNewToken, InternalError } from 'core';
 
 import { userSchema } from './user.model.schema';
 import { userErrors } from './user.messages';
 
-import { appendToSize, canGenerateNewToken } from '../../helpers/token';
-import { InternalError } from '../../helpers/InternalError';
 import { userToken } from '../../config/token';
 
 const { TOKEN_SECRET } = process.env;

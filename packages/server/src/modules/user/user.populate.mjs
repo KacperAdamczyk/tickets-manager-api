@@ -1,8 +1,7 @@
+import { InternalError, bindAllProps, asyncSandbox } from 'core';
+
 import { User } from './user.model';
-import { InternalError } from '../../helpers/InternalError';
 import { userErrors } from './user.messages';
-import { bindAllProps } from '../../helpers/enhancers';
-import { asyncSandbox } from '../../helpers/sandbox';
 
 class UserPopulate {
     async _populate(query) {
@@ -20,13 +19,13 @@ class UserPopulate {
     }
 
     async populate(req, res, id) {
-        res.locals.user = await this._populate({ _id: id});
+        res.locals.user = await this._populate({ _id: id });
     }
 
     async populateFromToken(req, res, next) {
         const { tokenPayload: { id } } = res.locals;
 
-        res.locals.user = await this._populate({ _id: id});
+        res.locals.user = await this._populate({ _id: id });
 
         next();
     }
@@ -43,4 +42,4 @@ const userPopulate = bindAllProps(new UserPopulate());
 
 export {
     userPopulate,
-}
+};
