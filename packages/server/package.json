@@ -1,11 +1,11 @@
 {
-  "name": "server",
+  "name": "@be/server",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "core": "^1.0.0",
+    "@be/core": "^1.0.0",
     "bcrypt": "^3.0.1",
     "body-parser": "^1.18.3",
     "connect-mongo": "^2.0.1",

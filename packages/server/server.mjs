@@ -8,7 +8,7 @@ import mongoose from 'mongoose';
 import morgan from 'morgan';
 import passport from 'passport';
 import session from 'express-session';
-import { errorHandler, sendResponseObject, log } from 'core';
+import { errorHandler, sendResponseObject, log } from '@be/core';
 
 import { connect as connectToDb, downProtector } from './src/database';
 import { router } from './src/config/router';

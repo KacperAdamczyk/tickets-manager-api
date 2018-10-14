@@ -1,4 +1,4 @@
-import { Validator } from 'core';
+import { Validator } from '@be/core';
 
 import { userValidationSchema } from './user.validation.schema';
 

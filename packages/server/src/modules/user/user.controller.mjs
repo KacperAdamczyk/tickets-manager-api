@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { InternalError, enhance } from 'core';
+import { InternalError, enhance } from '@be/core';
 
 import { User } from './user.model';
 import { userErrors, userMessages } from './user.messages';

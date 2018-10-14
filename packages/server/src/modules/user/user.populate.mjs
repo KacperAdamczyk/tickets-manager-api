@@ -1,4 +1,4 @@
-import { InternalError, bindAllProps, asyncSandbox } from 'core';
+import { InternalError, bindAllProps, asyncSandbox } from '@be/core';
 
 import { User } from './user.model';
 import { userErrors } from './user.messages';

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { log } from 'core';
+import { log } from '@be/core';
 
 mongoose.Promise = global.Promise;
 mongoose.set('useCreateIndex', true);

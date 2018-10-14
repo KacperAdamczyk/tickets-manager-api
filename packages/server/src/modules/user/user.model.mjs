@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import R from 'ramda';
-import { appendToSize, canGenerateNewToken, InternalError } from 'core';
+import { appendToSize, canGenerateNewToken, InternalError } from '@be/core';
 
 import { userSchema } from './user.model.schema';
 import { userErrors } from './user.messages';
@@ -69,7 +69,7 @@ class User extends mongoose.Model {
     static async validateToken(token, { id, purpose }) {
         const user = await this.findById(id);
 
-      return !!user && R.last(user.tokens[purpose]) === token;
+        return !!user && R.last(user.tokens[purpose]) === token;
     }
 }
 

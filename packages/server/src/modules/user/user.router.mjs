@@ -8,12 +8,12 @@ const router = express.Router();
 
 router.param(
     'id',
-    userPopulate.populate
+    userPopulate.populate,
 );
 
 router.post(
     '/login',
-    userController.loginSuccess
+    userController.loginSuccess,
 );
 
 router.post(
@@ -21,7 +21,7 @@ router.post(
     userValidation.createUser,
     userController.createUser,
     userController.generateActivationToken,
-    userController.createUserSuccess
+    userController.createUserSuccess,
 );
 
 router.put(
@@ -39,14 +39,14 @@ router.put(
     userPopulate.populateFromToken,
     userController.unactivatedOnly,
     userController.activateUser,
-    userController.activateUserSuccess
+    userController.activateUserSuccess,
 );
 
 router.get(
     '/validate-token/:purpose/:token',
     userController.populateTokenPayload,
     userController.validateTokenPayload,
-    userController.validateTokenPayloadSuccess
+    userController.validateTokenPayloadSuccess,
 );
 
 export {
