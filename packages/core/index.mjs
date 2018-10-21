@@ -1,5 +1,6 @@
 /* helpers */
 import { arrayify } from './helpers/array';
+import { isAuthenticated } from './helpers/authenticate';
 import { bindAllProps, enhance } from './helpers/enhancers';
 import { InternalError } from './helpers/InternalError';
 import { log } from './helpers/log';
@@ -16,6 +17,7 @@ import { sendResponseObject } from './middlewares/response';
 export {
     /* helpers */
     arrayify,
+    isAuthenticated,
     bindAllProps, enhance,
     InternalError,
     log,

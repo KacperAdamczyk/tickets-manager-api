@@ -4,14 +4,14 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
-import mongoose from 'mongoose';
 import morgan from 'morgan';
 import passport from 'passport';
 import session from 'express-session';
 import { errorHandler, sendResponseObject, log } from '@be/core';
 
-import { connect as connectToDb, downProtector } from './src/database';
+import { connect as connectToDb, downProtector } from './src/config/database';
 import { router } from './src/config/router';
+import { sessionConfig } from './src/config/session';
 
 import './src/config/passport';
 
@@ -19,20 +19,15 @@ import './src/config/passport';
 const MongoStore = connectMongo(session);
 const server = express();
 
-const { SESSION_SECRET, PORT } = process.env;
+const { PORT } = process.env;
 
 /* Middleware */
-server.use(session({
-    resave: true,
-    saveUninitialized: false,
-    secret: SESSION_SECRET,
-    store: new MongoStore({ mongooseConnection: mongoose.connection }),
-}));
 server.use(helmet());
 server.use(cors());
 server.use(cookieParser());
 server.use(bodyParser.urlencoded({ extended: true }));
 server.use(bodyParser.json());
+server.use(session(sessionConfig(MongoStore)));
 server.use(passport.initialize());
 server.use(passport.session());
 server.use(morgan('dev'));
@@ -44,11 +39,11 @@ server.use(router);
 server.use(errorHandler());
 
 function startServer() {
-    log.info('\nStarting the server... \n');
-    connectToDb();
-    server.listen(PORT, () => log.ok(`Server started on port ${PORT}! \n`));
+  log.info('\nStarting the server... \n');
+  connectToDb();
+  server.listen(PORT, () => log.ok(`Server started on port ${PORT}! \n`));
 }
 
 export {
-    startServer,
+  startServer,
 };

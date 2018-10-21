@@ -1,16 +1,16 @@
 class InternalError extends Error {
-    constructor({ message, code }) {
-        super(message);
+  constructor({ message, status }) {
+    super(message);
 
-        this.name = Object.getPrototypeOf(this).constructor.name;
-        this.code = code;
+    this.name = Object.getPrototypeOf(this).constructor.name;
+    this.status = status;
 
-        if (Error.captureStackTrace) {
-            Error.captureStackTrace(this, InternalError);
-        }
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, InternalError);
     }
+  }
 }
 
 export {
-    InternalError,
+  InternalError,
 };

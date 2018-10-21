@@ -5,16 +5,16 @@ import { userErrors } from './user.messages';
 
 class UserPopulate {
     async _populate(query) {
-        return await asyncSandbox(
+        return asyncSandbox(
             async () => {
-                const [user] = await User.find(query).limit(1);
+                const user = await User.findOne(query);
 
                 if (!user) {
                     throw new InternalError(userErrors.notFound);
                 }
 
                 return user;
-            }
+            },
         );
     }
 
@@ -33,7 +33,7 @@ class UserPopulate {
     async populateFromEmail(req, res, next) {
         const { email } = req.params;
 
-        res.locals.user = await this._populate({ email }); console.log(res.locals.user)
+        res.locals.user = await this._populate({ email });
         next();
     }
 }
