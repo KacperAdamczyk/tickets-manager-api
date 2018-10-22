@@ -23,8 +23,7 @@ passport.use(
           throw new InternalError(userErrors.invalidEmailAndOrPassword);
         }
 
-        const { tokens } = user;
-        if (tokens && tokens.activation.length) {
+        if (!user.isActivated()) {
           throw new InternalError(userErrors.notActivated);
         }
 

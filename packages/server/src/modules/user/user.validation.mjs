@@ -5,9 +5,9 @@ import { userValidationSchema } from './user.validation.schema';
 const createUser = new Validator().body.schema(userValidationSchema.createUser);
 
 const userValidation = {
-    createUser,
+  createUser,
 };
 
 export {
-    userValidation,
+  userValidation,
 };
