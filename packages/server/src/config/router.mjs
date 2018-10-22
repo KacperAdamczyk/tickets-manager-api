@@ -10,5 +10,5 @@ mainRouter.use('/api', subRouter);
 subRouter.use('/users', userRouter);
 
 export {
-    mainRouter as router,
+  mainRouter as router,
 };
