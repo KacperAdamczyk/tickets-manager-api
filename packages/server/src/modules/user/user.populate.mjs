@@ -1,10 +1,12 @@
-import { InternalError, bindAllProps, asyncSandbox } from '@be/core';
+import {
+  InternalError, bindAllProps, asyncSandbox, onlyErrorNextMiddleware,
+} from '@be/core';
 
 import { User } from './user.model';
 import { userErrors } from './user.messages';
 
 class UserPopulate {
-  async _populate(query) {
+  _populate(query) {
     return asyncSandbox(
       async () => {
         const user = await User.findOne(query);
@@ -18,14 +20,16 @@ class UserPopulate {
     );
   }
 
-  async populate(req, res, id) {
-    res.locals.user = await this._populate({ _id: id });
+  async populate(req, res, next, id) {
+    res.locals.user = await this._populate({ _id: id })(req, res, onlyErrorNextMiddleware(next));
+
+    next();
   }
 
   async populateFromToken(req, res, next) {
     const { tokenPayload: { id } } = res.locals;
 
-    res.locals.user = await this._populate({ _id: id });
+    res.locals.user = await this._populate({ _id: id })(req, res, onlyErrorNextMiddleware(next));
 
     next();
   }
@@ -33,7 +37,8 @@ class UserPopulate {
   async populateFromEmail(req, res, next) {
     const { email } = req.params;
 
-    res.locals.user = await this._populate({ email });
+    res.locals.user = await this._populate({ email })(req, res, onlyErrorNextMiddleware(next));
+
     next();
   }
 }

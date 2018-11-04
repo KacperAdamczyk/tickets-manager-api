@@ -1,40 +1,52 @@
 import Joi from 'joi';
 
 class Validator {
-    constructor() {
-        this._projectors = [];
-    }
+  constructor() {
+    this._projectors = [];
+  }
 
-    _combineProjectors(req, res) {
-        return this._projectors.reduce(
-            (acc, projector) => ({ ...acc, ...projector(req, res) }),
-            {}
-        );
-    }
+  _combineProjectors(req, res) {
+    return this._projectors.reduce(
+      (acc, projector) => ({ ...acc, ...projector(req, res) }),
+      {},
+    );
+  }
 
-    project(projector) {
-        this._projectors.push(projector);
+  project(projector) {
+    this._projectors.push(projector);
 
-        return this;
-    }
+    return this;
+  }
 
-    schema(schema) {
-        return (req, res, next) => (
-            Joi.validate(
-                this._combineProjectors(req, res),
-                schema,
-            )
-                .then(() => next(), next)
-        );
-    }
+  schema(schema) {
+    return (req, res, next) => (
+      Joi.validate(
+        this._combineProjectors(req, res),
+        schema,
+      )
+        .then(() => next(), next)
+    );
+  }
 
-    get body() {
-        this.project(req => req.body);
+  get body() {
+    this.project(req => req.body);
 
-        return this;
-    }
+    return this;
+  }
+
+  get params() {
+    this.project(req => req.params);
+
+    return this;
+  }
+
+  get query() {
+    this.project(req => req.query);
+
+    return this;
+  }
 }
 
 export {
-    Validator,
+  Validator,
 };

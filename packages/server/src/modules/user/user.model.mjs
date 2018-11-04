@@ -54,7 +54,7 @@ class User extends mongoose.Model {
     return token;
   }
 
-  isActivated() {
+  get activated() {
     return !this.tokens.activation.length;
   }
 

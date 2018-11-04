@@ -23,7 +23,7 @@ passport.use(
           throw new InternalError(userErrors.invalidEmailAndOrPassword);
         }
 
-        if (!user.isActivated()) {
+        if (!user.activated) {
           throw new InternalError(userErrors.notActivated);
         }
 

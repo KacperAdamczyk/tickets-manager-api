@@ -3,21 +3,21 @@ import { log } from '../helpers/log';
 const normalizeErrorCode = code => code < 600 ? code : 404;
 
 const errorHandler = () => (err, req, res, next) => {
-    const { stack, ...details } = err;
+  const { stack, ...details } = err;
 
-    log.errorObj(err);
-    log.error(`${stack}\n`);
+  log.errorObj(err);
+  log.error(`${stack}\n`);
 
-    res.status(normalizeErrorCode(err.code))
-        .send({
-            type: err.name,
-            message: err.message,
-            details,
-        });
+  res.status(normalizeErrorCode(err.code))
+    .send({
+      type: err.name,
+      message: err.message,
+      details,
+    });
 
-    next();
+  next();
 };
 
 export {
-    errorHandler,
+  errorHandler,
 };

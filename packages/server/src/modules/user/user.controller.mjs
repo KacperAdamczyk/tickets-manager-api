@@ -49,9 +49,9 @@ class UserController {
   }
 
   inactivatedOnly(req, res, next) {
-    const { user } = res.locals;
+    const { user } = res.locals; console.log(res.locals.user);
 
-    if (user.isActivated()) {
+    if (user.activated) {
       throw new InternalError(userErrors.alreadyActivated);
     }
 
@@ -76,6 +76,15 @@ class UserController {
     next();
   }
 
+  populateTokenPayloadSafe(req, res, next) {
+    try {
+      this.populateTokenPayload(req, res, next);
+    } catch (error) {
+      res.locals.tokenPayload = {};
+      next();
+    }
+  }
+
   async validateTokenPayload(req, res) {
     const { token, purpose: expectedPurpose } = req.params;
     const { tokenPayload } = res.locals;
@@ -83,9 +92,7 @@ class UserController {
 
     const isTokenValid = await User.validateToken(token, tokenPayload);
 
-    if (!(isTokenValid && purpose === (expectedPurpose || purpose))) {
-      throw new InternalError(userErrors.invalidToken);
-    }
+    res.locals.valid = isTokenValid && purpose === (expectedPurpose || purpose);
   }
 
   handleLogin(req, res, next) {
@@ -126,8 +133,14 @@ class UserController {
     res.sendResponse(userMessages.userLoggedIn, { user: userDetails(req.user) });
   }
 
-  validateTokenPayloadSuccess(req, res) {
-    res.sendResponse(userMessages.validToken);
+  validateTokenPayloadResponse(req, res) {
+    const { valid } = res.locals;
+
+    if (valid) {
+      res.sendResponse(userMessages.validToken, { valid });
+    } else {
+      res.sendResponse(userErrors.invalidToken, { valid });
+    }
   }
 
   generateActivationRequestSuccess(req, res) {

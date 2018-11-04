@@ -52,9 +52,9 @@ router.put(
 
 router.get(
   '/validate-token/:purpose/:token',
-  userController.populateTokenPayload,
+  userController.populateTokenPayloadSafe,
   userController.validateTokenPayload,
-  userController.validateTokenPayloadSuccess,
+  userController.validateTokenPayloadResponse,
 );
 
 export {

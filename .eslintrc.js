@@ -8,5 +8,8 @@ module.exports = {
     'consistent-return': 0,
     'no-confusing-arrow': 0,
     'arrow-parens': 0,
+    'no-unused-expressions': 0,
+    'no-use-before-define': 0,
+    'no-sequences': 0,
   }
 };

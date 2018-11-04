@@ -1,0 +1,13 @@
+{
+  "name": "@be/utilities",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Kacper Adamczyk",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@be/server": "^1.0.0",
+    "csv": "^4.0.0",
+    "ramda": "^0.25.0"
+  }
+}
