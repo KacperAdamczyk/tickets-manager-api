@@ -11,7 +11,7 @@ const routeSchema = new mongoose.Schema({
     ref: 'airport',
     required: true,
   },
-  airline: String,
+  startTime: String,
 });
 
 export {

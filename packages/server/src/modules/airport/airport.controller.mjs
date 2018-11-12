@@ -6,13 +6,13 @@ import { airportDetails } from './airport.mappers';
 class AirportController {
   async getFiltered(req, res) {
     const { query } = req.params;
-    const { limit } = req.query;
+    const { limit, exclude } = req.query;
     const queryRegexp = new RegExp(query, 'i');
 
     res.locals.airports = await Airport.find({
       $or: ['name', 'iata', 'icao', 'city', 'country'].map(
         key => ({
-          [key]: { $regex: queryRegexp },
+          [key]: { $regex: queryRegexp, $ne: exclude },
         }),
       ),
     }).limit(limit && +limit);
