@@ -3,15 +3,26 @@ import mongoose from 'mongoose';
 const routeSchema = new mongoose.Schema({
   sourceAirport: {
     type: mongoose.ObjectId,
-    ref: 'airport',
+    ref: 'Airport',
     required: true,
   },
   destinationAirport: {
     type: mongoose.ObjectId,
-    ref: 'airport',
+    ref: 'Airport',
     required: true,
   },
-  startTime: String,
+  startTime: {
+    type: Date,
+    required: true,
+  },
+  endTime: {
+    type: Date,
+    required: true,
+  },
+  distance: {
+    type: Number,
+    required: true,
+  },
 });
 
 export {

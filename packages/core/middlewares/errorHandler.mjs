@@ -8,7 +8,7 @@ const errorHandler = () => (err, req, res, next) => {
   log.errorObj(err);
   log.error(`${stack}\n`);
 
-  res.status(normalizeErrorCode(err.code))
+  res.status(normalizeErrorCode(err.status))
     .send({
       type: err.name,
       message: err.message,

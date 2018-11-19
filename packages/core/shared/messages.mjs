@@ -4,7 +4,7 @@ const messages = {
     message: 'User not authenticated.',
   },
   sessionExpired: {
-    status: 401,
+    status: 440,
     message: 'Session has expired.',
   },
 };

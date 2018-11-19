@@ -1,3 +1,4 @@
+import fns from 'date-fns';
 import { connect } from '@be/server/src/config/database';
 import { Airport } from '@be/server/src/modules/airport/airport.model';
 import { Route } from '@be/server/src/modules/route/route.model';
@@ -5,23 +6,54 @@ import { Route } from '@be/server/src/modules/route/route.model';
 import { loader } from './helpers/loader';
 import { parser } from './helpers/parser';
 
+const max = {
+  c: 0,
+};
+const min = {
+  c: Infinity,
+};
 // min - 116 max - 167 diff - 51 hours - 18 minutes - 1080 minutes/diff = 21 hours 5-23
 const charCode = str => str.split('').map(c => c.charCodeAt(0)).reduce((acc, c) => acc + c);
-const toDoubleChar = str => String(str).length === 1 ? `0${str}` : String(str);
 const getTimeFromString = str => {
-  const startCode = charCode('2B');
-  const endCode = charCode('ZM');
+  const startCode = charCode('A4CBB');
+  const endCode = charCode('IOSKYZ');
   const codeDiff = endCode - startCode;
-  const startHour = 5;
-  const endHour = 23;
+  const offset = 0.05;
+  const startHour = 5 + offset;
+  const endHour = 23 - offset;
   const hoursDiff = endHour - startHour;
-  const fraction = Math.floor(hoursDiff * 60 / codeDiff);
+  const fraction = hoursDiff * 60 / codeDiff;
   const code = charCode(str);
-  const time = fraction * (code - startCode);
-  const hours = Math.floor(time / 60);
-  const minutes = time - hours * 60 + Math.floor((hoursDiff * 60 - fraction * codeDiff) / 2);
+  const time = Math.floor(fraction * (code - startCode));
 
-  return `${hours + startHour}:${toDoubleChar(minutes)}`;
+  if (time > max.c) {
+    max.c = time;
+    max.s = str;
+  }
+  if (time < min.c) {
+    min.c = time;
+    min.s = str;
+  }
+
+  const date = fns.addMinutes(new Date(0), time + startHour * 60);
+
+  return date;
+};
+
+const degreesToRadians = deg => deg * Math.PI / 180;
+const calculateDistance = (a, b) => {
+  const R = 6371e3;
+  const dALat = degreesToRadians(a.latitude);
+  const dBLat = degreesToRadians(b.latitude);
+  const latDiff = dBLat - dALat;
+  const lonDiff = degreesToRadians(b.longitude - a.longitude);
+
+  const x = (Math.sin(latDiff / 2) ** 2)
+  + (Math.cos(dALat) * Math.cos(dBLat) * (Math.sin(lonDiff / 2) ** 2));
+
+  const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+
+  return Math.floor(R * c);
 };
 
 const insertToDb = async routes => {
@@ -32,8 +64,8 @@ const insertToDb = async routes => {
   }
   try {
     const airports = await Airport.find({});
-    const iataMap = airports.reduce((codes, { iata, _id }) => ({ ...codes, [iata]: _id }), {});
-    const icaoMap = airports.reduce((codes, { icao, _id }) => ({ ...codes, [icao]: _id }), {});
+    const iataMap = airports.reduce((codes, a) => ({ ...codes, [a.iata]: a }), {});
+    const icaoMap = airports.reduce((codes, a) => ({ ...codes, [a.icao]: a }), {});
 
     const tasks = routes.map(route => {
       const sourceAirport = iataMap[route.sourceAirport]
@@ -43,17 +75,25 @@ const insertToDb = async routes => {
 
       if (!(sourceAirport && destinationAirport)) return null;
 
+      const avgSpeed = 250;
+      const startTime = getTimeFromString(route.airline + sourceAirport.iata);
+      const distance = calculateDistance(sourceAirport, destinationAirport);
+      const endTime = fns.addMinutes(startTime, Math.floor(distance / avgSpeed / 60));
+
       return {
         insertOne: {
           document: {
-            startTime: getTimeFromString(route.airline),
             sourceAirport,
             destinationAirport,
+            startTime,
+            endTime,
+            distance,
           },
         },
       };
     }).filter(task => !!task);
 
+    console.log('min', min, 'max', max);
     await Route.bulkWrite(tasks);
   } catch (error) {
     console.log(error);

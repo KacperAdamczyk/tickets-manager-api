@@ -3,7 +3,7 @@ import { isAuthenticated } from '@be/core';
 
 import { routeController } from './route.controller';
 import { populateRoute } from './route.populate';
-// import { airportValidation } from './airport.validation';
+import { routeValidation } from './route.validation';
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ router.param('destination', populateRoute.destinationAirport);
 router.get(
   '/:source/:destination',
   isAuthenticated,
-  // airportValidation.getFiltered,
+  routeValidation.get,
   routeController.getRoute,
   routeController.getRouteSuccess,
 );

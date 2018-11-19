@@ -8,6 +8,7 @@
   "dependencies": {
     "@be/server": "^1.0.0",
     "csv": "^4.0.0",
+    "date-fns": "^1.29.0",
     "ramda": "^0.25.0"
   }
 }
