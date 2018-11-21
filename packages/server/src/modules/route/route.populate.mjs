@@ -1,6 +1,6 @@
 import { Airport } from '../airport/airport.model';
 
-class PopulateRoute {
+class RoutePopulate {
   async sourceAirport(req, res, next, code) {
     res.locals.sourceAirport = await Airport.findByCode(code);
 
@@ -14,8 +14,8 @@ class PopulateRoute {
   }
 }
 
-const populateRoute = new PopulateRoute();
+const routePopulate = new RoutePopulate();
 
 export {
-  populateRoute,
+  routePopulate,
 };

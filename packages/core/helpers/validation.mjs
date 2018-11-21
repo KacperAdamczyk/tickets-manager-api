@@ -45,6 +45,12 @@ class Validator {
 
     return this;
   }
+
+  get locals() {
+    this.project(req => req.locals);
+
+    return this;
+  }
 }
 
 export {

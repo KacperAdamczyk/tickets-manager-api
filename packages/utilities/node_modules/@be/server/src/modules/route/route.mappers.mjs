@@ -4,6 +4,7 @@ const routeDetails = route => ({
   endTime: route.endTime.valueOf(),
   sourceIata: route.sourceAirport.iata,
   destinationIata: route.destinationAirport.iata,
+  distance: route.distance,
 });
 
 export {
