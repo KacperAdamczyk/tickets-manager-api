@@ -24,9 +24,13 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  details: {
-    firstName: String,
-    lastName: String,
+  firstName: {
+    type: String,
+    required: true,
+  },
+  lastName: {
+    type: String,
+    required: true,
   },
 });
 

@@ -24,14 +24,14 @@ class User extends mongoose.Model {
     return !(await this.find({ email })).length;
   }
 
-  static async add(email, password) {
+  static async add({ password, ...user }) {
     const hashedPassword = await this.hashPassword(password);
 
-    if (!(await this.isEmailAvailable(email))) {
+    if (!(await this.isEmailAvailable(user.email))) {
       throw new InternalError(userErrors.emailAlreadyTaken);
     }
 
-    return this.create({ email, password: hashedPassword });
+    return this.create({ ...user, password: hashedPassword });
   }
 
   async generateToken(purpose, expiresIn, dailyLimit) {

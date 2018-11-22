@@ -43,9 +43,7 @@ class UserController {
   }
 
   async createUser(req, res) {
-    const { email, password } = req.body;
-
-    res.locals.user = await User.add(email, password);
+    res.locals.user = await User.add(req.body);
   }
 
   inactivatedOnly(req, res, next) {

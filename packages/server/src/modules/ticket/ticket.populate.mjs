@@ -20,7 +20,16 @@ class TicketPopulate {
     res.locals.ticket = await Ticket.findOne({
       _id,
       user,
-    });
+    }).populate([
+      {
+        path: 'route',
+        populate: [
+          { path: 'sourceAirport' },
+          { path: 'destinationAirport' },
+        ],
+      },
+      { path: 'user' },
+    ]);
 
     if (!res.locals.ticket) throw new InternalError(ticketErrors.ticketNotFound);
   }
@@ -30,17 +39,16 @@ class TicketPopulate {
 
     res.locals.tickets = await Ticket.find({
       user,
-    })
-      .populate([
-        {
-          path: 'route',
-          populate: [
-            { path: 'sourceAirport' },
-            { path: 'destinationAirport' },
-          ],
-        },
-        { path: 'user' },
-      ]);
+    }).populate([
+      {
+        path: 'route',
+        populate: [
+          { path: 'sourceAirport' },
+          { path: 'destinationAirport' },
+        ],
+      },
+      { path: 'user' },
+    ]);
   }
 
   async populateRoute(req, res) {
