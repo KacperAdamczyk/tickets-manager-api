@@ -5,50 +5,43 @@ import { ticketErrors } from './ticket.messages';
 import { Route } from '../route/route.model';
 
 class TicketPopulate {
-  async populate(req, res) {
-    const { id } = req.params;
+  async populate(req, res, _id) {
+    const { user } = req;
+    const query = req.isAdmin()
+      ? { _id }
+      : { _id, user };
 
-    res.locals.ticket = await Ticket.findById(id);
+    res.locals.ticket = await Ticket.findOne(query)
+      .populate([
+        {
+          path: 'route',
+          populate: [
+            { path: 'sourceAirport' },
+            { path: 'destinationAirport' },
+          ],
+        },
+        { path: 'user' },
+      ]);
 
     if (!res.locals.ticket) throw new InternalError(ticketErrors.ticketNotFound);
   }
 
-  async populateForUser(req, res) {
-    const { id: _id } = req.params;
-    const { user } = req;
+  async populateAll(req, res) {
+    const query = req.isAdmin()
+      ? { user: req.params.user }
+      : { user: req.user };
 
-    res.locals.ticket = await Ticket.findOne({
-      _id,
-      user,
-    }).populate([
-      {
-        path: 'route',
-        populate: [
-          { path: 'sourceAirport' },
-          { path: 'destinationAirport' },
-        ],
-      },
-      { path: 'user' },
-    ]);
-
-    if (!res.locals.ticket) throw new InternalError(ticketErrors.ticketNotFound);
-  }
-
-  async populateAllForUser(req, res) {
-    const { user } = req;
-
-    res.locals.tickets = await Ticket.find({
-      user,
-    }).populate([
-      {
-        path: 'route',
-        populate: [
-          { path: 'sourceAirport' },
-          { path: 'destinationAirport' },
-        ],
-      },
-      { path: 'user' },
-    ]);
+    res.locals.tickets = await Ticket.find(query)
+      .populate([
+        {
+          path: 'route',
+          populate: [
+            { path: 'sourceAirport' },
+            { path: 'destinationAirport' },
+          ],
+        },
+        { path: 'user' },
+      ]);
   }
 
   async populateRoute(req, res) {
@@ -63,8 +56,7 @@ class TicketPopulate {
 const ticketPopulate = new (
   enhance([
     'populate',
-    'populateForUser',
-    'populateAllForUser',
+    'populateAll',
     'populateRoute',
   ])(TicketPopulate)
 );

@@ -1,5 +1,5 @@
 import express from 'express';
-import { isAuthenticated } from '@be/core';
+import { isAuthenticated, isAdmin } from '@be/core';
 
 import { userController } from './user.controller';
 import { userValidation } from './user.validation';
@@ -30,6 +30,14 @@ router.get(
   '/',
   isAuthenticated,
   userController.getUser,
+);
+
+router.get(
+  '/all',
+  isAuthenticated,
+  isAdmin,
+  userPopulate.populateAll,
+  userController.getUsers,
 );
 
 router.put(

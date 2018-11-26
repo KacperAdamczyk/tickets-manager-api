@@ -1,6 +1,6 @@
 /* helpers */
 import { arrayify } from './helpers/array';
-import { isAuthenticated } from './helpers/authenticate';
+import { isAuthenticated, isAdmin } from './helpers/authenticate';
 import { bindAllProps, enhance } from './helpers/enhancers';
 import { InternalError } from './helpers/InternalError';
 import { log } from './helpers/log';
@@ -11,13 +11,14 @@ import { Validator } from './helpers/validation';
 /* middlewares */
 import { applyMiddlewareToResponse } from './middlewares/applyMiddleware';
 import { errorHandler } from './middlewares/errorHandler';
+import { isAdminMiddleware } from './middlewares/request';
 import { sendResponseObject } from './middlewares/response';
 
 
 export {
   /* helpers */
   arrayify,
-  isAuthenticated,
+  isAuthenticated, isAdmin,
   bindAllProps, enhance,
   InternalError,
   log,
@@ -27,5 +28,6 @@ export {
   /* middlewares */
   applyMiddlewareToResponse,
   errorHandler,
+  isAdminMiddleware,
   sendResponseObject,
 };

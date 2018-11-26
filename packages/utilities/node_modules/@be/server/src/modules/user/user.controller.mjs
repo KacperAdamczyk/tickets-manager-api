@@ -119,6 +119,12 @@ class UserController {
     res.send(userDetails(user));
   }
 
+  getUsers(req, res) {
+    const { users } = res.locals;
+
+    res.send(users.map(userDetails));
+  }
+
   createUserSuccess(req, res) {
     res.sendResponse(userMessages.userCreated, { id: res.locals.user._id });
   }

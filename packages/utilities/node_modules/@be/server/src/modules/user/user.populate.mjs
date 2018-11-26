@@ -1,5 +1,5 @@
 import {
-  InternalError, bindAllProps, asyncSandbox, onlyErrorNextMiddleware,
+  InternalError, enhance, asyncSandbox, onlyErrorNextMiddleware,
 } from '@be/core';
 
 import { User } from './user.model';
@@ -22,8 +22,6 @@ class UserPopulate {
 
   async populate(req, res, next, id) {
     res.locals.user = await this._populate({ _id: id })(req, res, onlyErrorNextMiddleware(next));
-
-    next();
   }
 
   async populateFromToken(req, res, next) {
@@ -41,9 +39,20 @@ class UserPopulate {
 
     next();
   }
+
+  async populateAll(req, res) {
+    res.locals.users = await User.find({
+      admin: false,
+    });
+  }
 }
 
-const userPopulate = bindAllProps(new UserPopulate());
+const userPopulate = new (
+  enhance([
+    'populate',
+    'populateAll',
+  ])(UserPopulate)
+);
 
 export {
   userPopulate,

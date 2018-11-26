@@ -20,6 +20,15 @@ const isAuthenticated = (req, res, next) => {
   next();
 };
 
+const isAdmin = (req, res, next) => {
+  if (!req.isAdmin()) {
+    throw new InternalError(messages.notAuthorized);
+  }
+
+  next();
+};
+
 export {
   isAuthenticated,
+  isAdmin,
 };

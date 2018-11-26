@@ -15,6 +15,10 @@ class TicketController {
     });
   }
 
+  async delete(req, res) {
+    await Ticket.findByIdAndDelete(res.locals.ticket);
+  }
+
   createSuccess(req, res) {
     res.sendResponse(ticketMessages.ticketCreated, { id: res.locals.ticket._id });
   }
@@ -26,11 +30,16 @@ class TicketController {
   getAllSuccess(req, res) {
     res.send(res.locals.tickets.map(ticketBriefMapper));
   }
+
+  deleteSuccess(req, res) {
+    res.sendResponse(ticketMessages.ticketDeleted);
+  }
 }
 
 const ticketController = new (
   enhance([
     'create',
+    'delete',
   ])(TicketController)
 );
 
