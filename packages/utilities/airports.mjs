@@ -1,4 +1,4 @@
-import R from 'ramda';
+import { propEq } from 'ramda';
 import { connect } from '@be/server/src/config/database';
 import { Airport } from '@be/server/src/modules/airport/airport.model';
 
@@ -41,11 +41,11 @@ const parseAirports = ([airports]) => {
     'type',
     'source',
   ])([
-    R.propEq('iata', '\\N'),
-    R.propEq('iata', ''),
-    R.propEq('city', ''),
+    propEq('iata', '\\N'),
+    propEq('iata', ''),
+    propEq('city', ''),
   ], [
-    R.propEq('type', 'airport'),
+    propEq('type', 'airport'),
   ])([
     'name',
     'city',

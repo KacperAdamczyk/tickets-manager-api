@@ -1,4 +1,4 @@
-import R from 'ramda';
+import { curry } from 'ramda';
 
 const asyncSandbox = func => async (req, res, next, ...params) => {
   try {
@@ -12,7 +12,7 @@ const asyncSandbox = func => async (req, res, next, ...params) => {
   }
 };
 
-const onlyErrorNextMiddleware = R.curry(
+const onlyErrorNextMiddleware = curry(
   (next, error) => error && next(error),
 );
 

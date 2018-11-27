@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
-import { InternalError, enhance, log } from '@be/core';
+import { InternalError, bindAllProps, log } from '@be/core';
 
 import { User } from './user.model';
 import { userErrors, userMessages } from './user.messages';
@@ -162,15 +162,7 @@ class UserController {
   }
 }
 
-const userController = new (
-  enhance([
-    'createUser',
-    'activateUser',
-    'generateActivationToken',
-    'validateTokenPayload',
-    'resetDailyLimits',
-  ])(UserController)
-);
+const userController = bindAllProps(new UserController);
 
 export {
   userController,

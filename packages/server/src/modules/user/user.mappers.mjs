@@ -1,6 +1,6 @@
-import R from 'ramda';
+import { pick } from 'ramda';
 
-const userDetails = R.pick([
+const userDetails = pick([
   '_id',
   'admin',
   'email',

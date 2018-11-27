@@ -1,6 +1,6 @@
-import R from 'ramda';
+import { pick } from 'ramda';
 
-const airportDetails = R.pick([
+const airportDetails = pick([
   'name',
   'city',
   'country',
