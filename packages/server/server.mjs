@@ -7,7 +7,12 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import passport from 'passport';
 import session from 'express-session';
-import { errorHandler, sendResponseObject, log } from '@be/core';
+import {
+  errorHandler,
+  isAdminMiddleware,
+  sendResponseObject,
+  log,
+} from '@be/core';
 
 import { connect as connectToDb, downProtector } from './src/config/database';
 import { router } from './src/config/router';
@@ -33,6 +38,7 @@ server.use(passport.session());
 server.use(morgan('dev'));
 
 server.use(downProtector());
+server.use(isAdminMiddleware());
 server.use(sendResponseObject());
 server.use(router);
 

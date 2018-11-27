@@ -1,11 +1,11 @@
-import { enhance } from '@be/core';
+import { bindAllProps } from '@be/core';
 
 import { Ticket } from './ticket.model';
 import { ticketMessages } from './ticket.messages';
 import { ticketMapper, ticketBriefMapper } from './ticket.mappers';
 
 class TicketController {
-  async create(req, res) {
+  async create(req, res, next) {
     const { routeId: route, startDate } = req.body;
 
     res.locals.ticket = await Ticket.create({
@@ -13,6 +13,14 @@ class TicketController {
       startDate,
       user: req.user,
     });
+
+    next();
+  }
+
+  async delete(req, res, next) {
+    await Ticket.findByIdAndDelete(res.locals.ticket);
+
+    next();
   }
 
   createSuccess(req, res) {
@@ -26,13 +34,13 @@ class TicketController {
   getAllSuccess(req, res) {
     res.send(res.locals.tickets.map(ticketBriefMapper));
   }
+
+  deleteSuccess(req, res) {
+    res.sendResponse(ticketMessages.ticketDeleted);
+  }
 }
 
-const ticketController = new (
-  enhance([
-    'create',
-  ])(TicketController)
-);
+const ticketController = bindAllProps(new TicketController);
 
 export {
   ticketController,

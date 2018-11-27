@@ -1,20 +1,31 @@
-import R from 'ramda';
+import {
+  pipe,
+  allPass,
+  anyPass,
+  compose,
+  not,
+  map,
+  filter,
+  project,
+  F,
+  T,
+} from 'ramda';
 
 import { objectify } from './objectify';
 
-const parser = fields => (exclude = [R.F], include = [R.T]) => project => data => {
-  const transformer = R.pipe(objectify(fields));
-  const filter = R.allPass([
-    R.compose(
-      R.not,
-      R.anyPass(exclude),
+const parser = fields => (exclude = [F], include = [T]) => projectFn => data => {
+  const transformer = pipe(objectify(fields));
+  const filterFn = allPass([
+    compose(
+      not,
+      anyPass(exclude),
     ),
-    R.allPass(include),
+    allPass(include),
   ]);
-  const parsed = R.pipe(
-    R.map(transformer),
-    R.filter(filter),
-    R.project(project),
+  const parsed = pipe(
+    map(transformer),
+    filter(filterFn),
+    project(projectFn),
   )(data);
 
   return parsed;

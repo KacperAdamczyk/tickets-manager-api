@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import R from 'ramda';
+import { last } from 'ramda';
 import { appendToSize, canGenerateNewToken, InternalError } from '@be/core';
 
 import { userSchema } from './user.model.schema';
@@ -60,7 +60,7 @@ class User extends mongoose.Model {
 
   async activateUser(token, { purpose }) {
     const activationPurpose = userToken.activation.purpose;
-    const activationToken = R.last(this.tokens[activationPurpose]);
+    const activationToken = last(this.tokens[activationPurpose]);
 
     if (token !== activationToken && purpose !== activationPurpose) {
       return false;
@@ -77,7 +77,7 @@ class User extends mongoose.Model {
   static async validateToken(token, { id, purpose }) {
     const user = await this.findById(id);
 
-    return !!user && R.last(user.tokens[purpose]) === token;
+    return !!user && last(user.tokens[purpose]) === token;
   }
 }
 

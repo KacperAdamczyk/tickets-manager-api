@@ -1,5 +1,5 @@
 import express from 'express';
-import { isAuthenticated } from '@be/core';
+import { isAuthenticated, isAdmin } from '@be/core';
 
 import { ticketController } from './ticket.controller';
 import { ticketPopulate } from './ticket.populate';
@@ -7,17 +7,26 @@ import { ticketValidation } from './ticket.validation';
 
 const router = express.Router();
 
+router.param('id', ticketPopulate.populate);
+
 router.get(
   '/:id',
   isAuthenticated,
-  ticketPopulate.populateForUser,
   ticketController.getSuccess,
 );
 
 router.get(
   '/',
   isAuthenticated,
-  ticketPopulate.populateAllForUser,
+  ticketPopulate.populateAll,
+  ticketController.getAllSuccess,
+);
+
+router.get(
+  '/:user',
+  isAuthenticated,
+  isAdmin,
+  ticketPopulate.populateAll,
   ticketController.getAllSuccess,
 );
 
@@ -28,6 +37,13 @@ router.post(
   ticketPopulate.populateRoute,
   ticketController.create,
   ticketController.createSuccess,
+);
+
+router.delete(
+  '/:id',
+  isAuthenticated,
+  ticketController.delete,
+  ticketController.deleteSuccess,
 );
 
 export {

@@ -14,6 +14,10 @@ const ticketMessages = {
     status: 201,
     message: 'Ticket has been booked.',
   },
+  ticketDeleted: {
+    status: 200,
+    message: 'Ticket has been deleted.',
+  },
 };
 
 export {

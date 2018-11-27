@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
-import { InternalError, enhance, log } from '@be/core';
+import { InternalError, bindAllProps, log } from '@be/core';
 
 import { User } from './user.model';
 import { userErrors, userMessages } from './user.messages';
@@ -119,6 +119,12 @@ class UserController {
     res.send(userDetails(user));
   }
 
+  getUsers(req, res) {
+    const { users } = res.locals;
+
+    res.send(users.map(userDetails));
+  }
+
   createUserSuccess(req, res) {
     res.sendResponse(userMessages.userCreated, { id: res.locals.user._id });
   }
@@ -156,15 +162,7 @@ class UserController {
   }
 }
 
-const userController = new (
-  enhance([
-    'createUser',
-    'activateUser',
-    'generateActivationToken',
-    'validateTokenPayload',
-    'resetDailyLimits',
-  ])(UserController)
-);
+const userController = bindAllProps(new UserController);
 
 export {
   userController,
