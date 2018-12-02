@@ -30,7 +30,7 @@ class TicketPopulate {
 
   async populateAll(req, res, next) {
     const query = req.isAdmin()
-      ? { user: req.params.user }
+      ? { user: req.params.user || req.user }
       : { user: req.user };
 
     res.locals.tickets = await Ticket.find(query)
@@ -42,7 +42,6 @@ class TicketPopulate {
             { path: 'destinationAirport' },
           ],
         },
-        { path: 'user' },
       ]);
 
     next();
