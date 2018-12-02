@@ -32,6 +32,8 @@ const ticketMapper = ticket => ({
   },
   user: {
     id: ticket.user._id,
+    firstName: ticket.user.firstName,
+    lastName: ticket.user.lastName,
   },
 });
 

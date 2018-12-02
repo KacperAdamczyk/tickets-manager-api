@@ -23,7 +23,7 @@ router.get(
 );
 
 router.get(
-  '/:user',
+  '/user/:user',
   isAuthenticated,
   isAdmin,
   ticketPopulate.populateAll,
@@ -35,6 +35,7 @@ router.post(
   isAuthenticated,
   ticketValidation.create,
   ticketPopulate.populateRoute,
+  ticketValidation.startMoment,
   ticketController.create,
   ticketController.createSuccess,
 );
