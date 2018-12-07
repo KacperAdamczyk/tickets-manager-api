@@ -1,13 +1,13 @@
-import chalk from 'chalk';
-import * as nodemailer from 'nodemailer';
-import { serverLog } from '../routers/common';
+import { log, callWithOrReturn } from '@be/core';
+import nodemailer from 'nodemailer';
 
-const transporter = new Promise((resolve, reject) => {
+const transporterGenerator = new Promise((resolve, reject) => {
   nodemailer.createTestAccount((err, account) => {
     if (err) {
       return reject(err);
     }
-    const transporterInstance = nodemailer.createTransport({
+
+    const transporter = nodemailer.createTransport({
       auth: {
         user: account.user,
         pass: account.pass,
@@ -16,25 +16,27 @@ const transporter = new Promise((resolve, reject) => {
       port: 587,
       secure: false, // true for 465, false for other ports
     });
-    resolve(transporterInstance);
+    resolve(transporter);
   });
 });
 
-export function sendActivation(to, link) {
+const sendEmail = (to, template, data) => {
   const mailOptions = {
-    from: '"BE Air" <no-replay@beair.com>',
+    from: '"BE Air" <no-replay@be.dd>',
     to,
-    subject: 'Your activation link',
-    html: '<h3>Hello!</h3>' +
-        `<a href="${link}">Click here</a>`,
+    subject: callWithOrReturn(template.subject, data),
+    html: callWithOrReturn(template.html, data),
   };
-  transporter.then((transporterInstance) => {
-    (transporterInstance).sendMail(mailOptions, (error, info) => {
-      if (error) {
-        return serverLog(error);
-      }
-      serverLog(chalk.blue('Activation message sent: ', info.messageId));
-      serverLog(chalk.blue('Preview URL: ', nodemailer.getTestMessageUrl(info)));
+
+  return transporterGenerator
+    .then(transporter => transporter.sendMail(mailOptions))
+    .then(info => {
+      console.log('Email sent: ', nodemailer.getTestMessageUrl(info));
+
+      return info;
     });
-  }, (err) => serverLog(chalk.red(err)));
-}
+};
+
+export {
+  sendEmail,
+};

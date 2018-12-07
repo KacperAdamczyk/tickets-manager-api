@@ -10,7 +10,7 @@
     "joi": "^14.3.0",
     "jsonwebtoken": "^8.4.0",
     "moment": "^2.22.2",
-    "ramda": "^0.26.0"
+    "ramda": "^0.26.1"
   },
   "devDependencies": {
     "@types/chalk": "^2.2.0",

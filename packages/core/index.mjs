@@ -1,6 +1,7 @@
 /* helpers */
 import { arrayify } from './helpers/array';
 import { isAuthenticated, isAdmin } from './helpers/authenticate';
+import { callWithOrReturn } from './helpers/callWithOrReturn';
 import { bindAllProps, enhance } from './helpers/enhancers';
 import { InternalError } from './helpers/InternalError';
 import { log } from './helpers/log';
@@ -19,6 +20,7 @@ export {
   /* helpers */
   arrayify,
   isAuthenticated, isAdmin,
+  callWithOrReturn,
   bindAllProps, enhance,
   InternalError,
   log,

@@ -42,6 +42,10 @@ const userMessages = {
     status: 200,
     message: 'User successfully authenticated.',
   },
+  userLoggedOut: {
+    status: 200,
+    message: 'User successfully logged out.',
+  },
   validToken: {
     status: 200,
     message: 'Provided token has been successfully validated.',

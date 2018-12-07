@@ -18,11 +18,18 @@ router.post(
   userController.loginSuccess,
 );
 
+router.get(
+  '/logout',
+  userController.logout,
+  userController.logoutSuccess,
+);
+
 router.post(
   '/',
   userValidation.createUser,
   userController.createUser,
   userController.generateActivationToken,
+  userController.sendActivationEmail,
   userController.createUserSuccess,
 );
 
@@ -45,6 +52,7 @@ router.put(
   userPopulate.populateFromEmail,
   userController.inactivatedOnly,
   userController.generateActivationToken,
+  userController.sendActivationEmail,
   userController.generateActivationRequestSuccess,
 );
 

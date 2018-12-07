@@ -4,12 +4,11 @@ import { log } from '@be/core';
 mongoose.Promise = global.Promise;
 mongoose.set('useCreateIndex', true);
 
-const { DATABASE_IP, DATABASE_PORT, DATABASE_NAME } = process.env;
-const connectionString = `mongodb://${DATABASE_IP}:${DATABASE_PORT}/${DATABASE_NAME}`;
+const { DATABASE_CONNECTION_STRING } = process.env;
 
 let connected = false;
 
-const connect = () => mongoose.connect(connectionString, { useNewUrlParser: true })
+const connect = () => mongoose.connect(DATABASE_CONNECTION_STRING, { useNewUrlParser: true })
   .catch(err => (log.error(`${err}\n`), Promise.reject(err)));
 
 mongoose.connection.on('disconnected', () => {
