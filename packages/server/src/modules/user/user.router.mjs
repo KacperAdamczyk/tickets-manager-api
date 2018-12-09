@@ -47,7 +47,15 @@ router.get(
   userController.getUsers,
 );
 
-router.put(
+router.patch(
+  '/password',
+  isAuthenticated,
+  userValidation.changePassword,
+  userController.changePassword,
+  userController.changePasswordSuccess,
+);
+
+router.patch(
   '/activate/request/:email',
   userPopulate.populateFromEmail,
   userController.inactivatedOnly,
@@ -56,7 +64,7 @@ router.put(
   userController.generateActivationRequestSuccess,
 );
 
-router.put(
+router.patch(
   '/activate/:token',
   userController.populateTokenPayload,
   userController.validateTokenPayload,

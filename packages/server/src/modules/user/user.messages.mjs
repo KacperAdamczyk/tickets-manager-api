@@ -15,6 +15,10 @@ const userErrors = {
     status: 401,
     message: 'Invalid email and/or password.',
   },
+  oldPasswordDoesNotMatch: {
+    status: 400,
+    message: 'Old password does not match.',
+  },
   notActivated: {
     status: 400,
     message: 'User is not activated.',
@@ -37,6 +41,10 @@ const userMessages = {
   userActivated: {
     status: 200,
     message: 'User has been activated.',
+  },
+  passwordChanged: {
+    status: 200,
+    message: 'Password has been changed.',
   },
   userLoggedIn: {
     status: 200,

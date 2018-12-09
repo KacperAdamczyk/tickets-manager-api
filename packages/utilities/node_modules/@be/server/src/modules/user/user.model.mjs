@@ -74,6 +74,16 @@ class User extends mongoose.Model {
     return true;
   }
 
+  async changePassword(oldPassword, newPassword) {
+    if (!await this.comparePassword(oldPassword)) {
+      throw new InternalError(userErrors.oldPasswordDoesNotMatch);
+    }
+
+    this.password = await User.hashPassword(newPassword);
+
+    await this.save();
+  }
+
   static async validateToken(token, { id, purpose }) {
     const user = await this.findById(id);
 

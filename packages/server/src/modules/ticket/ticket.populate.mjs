@@ -42,7 +42,10 @@ class TicketPopulate {
             { path: 'destinationAirport' },
           ],
         },
-      ]);
+      ])
+      .sort({
+        startDate: 'desc',
+      });
 
     next();
   }

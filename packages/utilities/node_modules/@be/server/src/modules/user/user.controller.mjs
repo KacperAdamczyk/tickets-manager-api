@@ -65,6 +65,14 @@ class UserController {
     next();
   }
 
+  async changePassword(req, res, next) {
+    const { user, body: { oldPassword, password } } = req;
+
+    await user.changePassword(oldPassword, password);
+
+    next();
+  }
+
   populateTokenPayload(req, res, next) {
     const { token } = req.params;
 
@@ -150,6 +158,10 @@ class UserController {
 
   activateUserSuccess(req, res) {
     res.sendResponse(userMessages.userActivated);
+  }
+
+  changePasswordSuccess(req, res) {
+    res.sendResponse(userMessages.passwordChanged);
   }
 
   loginSuccess(req, res) {
