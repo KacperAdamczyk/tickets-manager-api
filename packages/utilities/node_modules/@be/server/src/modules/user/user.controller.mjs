@@ -27,13 +27,9 @@ class UserController {
   }
 
   async generatePasswordResetToken(req, res, next) {
-    try {
-      await this.generateTokenFactory(userToken.passwordReset)(req, res);
-    } catch (error) {
-      log.errorObj(error);
+    await this.generateTokenFactory(userToken.passwordReset)(req, res);
 
-      next();
-    }
+    next();
   }
 
   async createUser(req, res, next) {
@@ -69,6 +65,16 @@ class UserController {
     const { user, body: { oldPassword, password } } = req;
 
     await user.changePassword(oldPassword, password);
+
+    next();
+  }
+
+  async resetPassword(req, res, next) {
+    const { body: { password } } = req;
+    const { user, tokenPayload: { purpose } } = res.locals;
+    const { token } = req.params;
+
+    await user.resetPassword(token, purpose, password);
 
     next();
   }
@@ -110,6 +116,15 @@ class UserController {
     const link = `${APP_URL}/activate/${token}`;
 
     await sendEmail(user.email, userTemplate.activation, { link });
+
+    next();
+  }
+
+  async sendPasswordResetEmail(req, res, next) {
+    const { user, token } = res.locals;
+    const link = `${APP_URL}/reset-password/${token}`;
+
+    await sendEmail(user.email, userTemplate.resetPassword, { link });
 
     next();
   }
@@ -178,20 +193,8 @@ class UserController {
     res.sendResponse(valid ? userMessages.validToken : userErrors.invalidToken, { valid });
   }
 
-  generateActivationRequestSuccess(req, res) {
-    res.sendResponse(userMessages.activationRequest);
-  }
-
-  async resetDailyLimits(req, res, next) { // TODO check if necessary
-    const { id, purpose } = res.locals.tokenPayload;
-
-    const user = await User.findById(id);
-    user.tokens[purpose] = [];
-    user.markModified(`tokens.${purpose}`);
-
-    await user.save();
-
-    next();
+  passwordResetRequestSuccess(req, res) {
+    res.sendResponse(userMessages.passwordResetRequest);
   }
 }
 

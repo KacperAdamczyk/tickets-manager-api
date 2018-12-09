@@ -58,9 +58,9 @@ const userMessages = {
     status: 200,
     message: 'Provided token has been successfully validated.',
   },
-  activationRequest: {
+  passwordResetRequest: {
     status: 200,
-    message: 'Activation request has been sent to provided email address.',
+    message: 'Password reset request has been sent to provided email address.',
   },
 };
 

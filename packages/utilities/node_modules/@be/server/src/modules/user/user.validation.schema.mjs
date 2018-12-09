@@ -14,6 +14,10 @@ const userValidationSchema = {
     oldPassword: passwordSchema,
     password: passwordSchema,
   },
+
+  resetPassword: {
+    password: passwordSchema,
+  },
 };
 
 export {

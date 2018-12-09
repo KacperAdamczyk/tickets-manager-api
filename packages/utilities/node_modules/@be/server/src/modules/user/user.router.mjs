@@ -56,12 +56,21 @@ router.patch(
 );
 
 router.patch(
-  '/activate/request/:email',
+  '/password/:token',
+  userController.populateTokenPayload,
+  userController.validateTokenPayload,
+  userPopulate.populateFromToken,
+  userValidation.resetPassword,
+  userController.resetPassword,
+  userController.changePasswordSuccess,
+);
+
+router.patch(
+  '/password/request/:email',
   userPopulate.populateFromEmail,
-  userController.inactivatedOnly,
-  userController.generateActivationToken,
-  userController.sendActivationEmail,
-  userController.generateActivationRequestSuccess,
+  userController.generatePasswordResetToken,
+  userController.sendPasswordResetEmail,
+  userController.passwordResetRequestSuccess,
 );
 
 router.patch(
@@ -76,7 +85,7 @@ router.patch(
 
 router.get(
   '/validate-token/:purpose/:token',
-  userController.populateTokenPayloadSafe,
+  userController.populateTokenPayload,
   userController.validateTokenPayload,
   userController.validateTokenPayloadResponse,
 );

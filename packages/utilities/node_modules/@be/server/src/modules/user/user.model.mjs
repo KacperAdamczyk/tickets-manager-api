@@ -84,6 +84,22 @@ class User extends mongoose.Model {
     await this.save();
   }
 
+  async resetPassword(token, purpose, newPassword) {
+    const passwordResetPurpose = userToken.passwordReset.purpose;
+    const passwordResetToken = last(this.tokens[passwordResetPurpose]);
+
+    if (token !== passwordResetToken && purpose !== passwordResetPurpose) {
+      return false;
+    }
+
+    this.tokens[passwordResetPurpose] = [];
+    this.markModified(`tokens.${passwordResetPurpose}`);
+
+    this.password = await User.hashPassword(newPassword);
+
+    await this.save();
+  }
+
   static async validateToken(token, { id, purpose }) {
     const user = await this.findById(id);
 
