@@ -7,9 +7,9 @@ const maxDifference = 2;
 const isSessionNewlyCreated = age => age >= +SESSION_MAX_AGE - maxDifference;
 
 const isAuthenticated = (req, res, next) => {
-  const newlyCreated = isSessionNewlyCreated(req.session.cookie.maxAge);
-
   if (!req.isAuthenticated()) {
+    const newlyCreated = isSessionNewlyCreated(req.session.cookie.maxAge);
+
     if (newlyCreated) {
       throw new InternalError(messages.sessionExpired);
     }
